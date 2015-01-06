@@ -21,7 +21,14 @@
             return data || {};
         },
 
-        set: function (delegate) {
+        set: function (value) {
+            var me = this;
+            SJ.iwc.Lock.interlockedCall(me._dataId, function () {
+                me.writeToStorage(value);
+            });
+        },
+
+        change: function (delegate) {
             var me = this;
             SJ.iwc.Lock.interlockedCall(me._dataId, function () {
                 var data = me.get();
@@ -31,14 +38,17 @@
         },
 
         onChanged: function (fn, scope) {
+            var me = this;
             me._observable.on('changed', fn, scope);
         },
 
         onceChanged: function (fn, scope) {
+            var me = this;
             me._observable.once('changed', fn, scope);
         },
 
         unChanged: function (fn, scope) {
+            var me = this;
             me._observable.un('changed', fn, scope);
         },
 
@@ -50,7 +60,8 @@
             me._observable.fire('changed', data);
         },
 
-        onStorageChanged: function () {
+        onStorageChanged: function (event) {
+            var me = this;
             if ((event.key && event.key === me._dataId) || event.key) {
                 var serializedData = SJ.localStorage.getItem(me._dataId);
                 if (serializedData !== me._serializedData) {
@@ -60,5 +71,5 @@
         }
         //endregion
     };
-    scope = SharedData;
-})(SJ.ns('iwc.SharedData'));
+    scope.SharedData = SharedData;
+})(SJ.ns('iwc'));

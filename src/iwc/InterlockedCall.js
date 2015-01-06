@@ -90,8 +90,7 @@
     };
 
     function removeLock (lockId) {
-        var me = this;
-        var lockStorageId = me.lockIdPrefix + lockId;
+        var lockStorageId = lockIdPrefix + lockId;
         SJ.localStorage.removeItem(lockStorageId);
     };
 

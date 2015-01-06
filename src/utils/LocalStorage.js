@@ -146,10 +146,9 @@
         },
         setVersion: function (storagePrefix, version) {
             var me = this;
-            var data = me.getItem(storagePrefix);
-            if (data) {
-                var currentVersion = parseInt(data);
-                if (currentVersion < version || isNaN(currentVersion)) {
+            var currentVersion = me.getItem(storagePrefix);
+            if (currentVersion) {
+                if (currentVersion !== version.toString()) {
                     me.forEach(function (key) {
                         if (key.substr(0, storagePrefix.length) === storagePrefix) {
                             me.removeItem(key);
