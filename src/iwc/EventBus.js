@@ -25,7 +25,7 @@
         observableAll.fire.apply(window, busEvent.args);
     };
 
-    scope = {
+    SJ.copy(scope, {
         on: function (eventName, fn, scope, listenThisWindow) {
             if (listenThisWindow) {
                 observableAll.on(eventName, fn, scope);
@@ -51,5 +51,5 @@
         },
 
         fire: fire
-    };
+    });
 })(SJ.ns('iwc.EventBus'));

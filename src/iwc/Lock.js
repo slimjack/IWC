@@ -1,6 +1,6 @@
 ﻿(function (scope) {
     var lockIdPrefix = SJ.iwc.getLocalStoragePrefix() + '_LOCK_';
-    var lockerId = SJ.generateGUID();
+    var lockCheckInterval = 500;
     var activeLocks = [];
     var isInitialized = false;
 
@@ -22,7 +22,7 @@
 
     SJ.windowOn(window, 'unload', onWindowUnload);
     clearJunkLocks(function () {
-        SJ.iwc.WindowsMonitor.onWindowsChanged(function (newWindows, removedWindows) {
+        SJ.iwc.WindowMonitor.onWindowsChanged(function (newWindows, removedWindows) {
             if (removedWindows.length) {
                 clearJunkLocks();
             }
@@ -31,18 +31,19 @@
     });
 
     function onLocksInitialized (fn) {
-        observable.once('permanentlocksenabled', fn);
+        observable.once('locksinitialized', fn);
     };
 
     function setLocksInitialized() {
         isInitialized = true;
-        observable.fire('permanentlocksenabled');
+        observable.fire('locksinitialized');
     };
 
     function captureLock(lockId, callback) {
         var captured = false;
         var released = false;
         var listening = false;
+        var listeningTimer = null;
         var lockObject = {
             lockId: lockId,
             release: function () {
@@ -63,30 +64,41 @@
                 return released;
             }
         };
+
+        var listen = function () {
+            if (!listening) {
+                on(tryCapture);
+                listeningTimer = window.setInterval(tryCapture, lockCheckInterval);
+                listening = true;
+            }
+        };
+        var stopListening = function () {
+            if (listening) {
+                un(tryCapture);
+                window.clearInterval(listeningTimer);
+                listening = false;
+            }
+        };
         var tryCapture = function () {
             if (captured || released) return;
             if (isLockAlreadyCaptured(lockId)) {
-                if (!listening) {
-                    on(tryCapture);
-                    listening = true;
-                }
+                listen();
             } else {
-                if (listening) {
-                    un(tryCapture);
-                    listening = false;
-                }
+                stopListening();
                 SJ.iwc.Lock.interlockedCall(lockId, function () {
                     if (!isLockAlreadyCaptured(lockId)) {
                         setLock(lockObject);
                         captured = true;
                         callback();
-                    } else if (!listening) {
-                        var timerId = window.setTimeout(function () {
-                            //subscription should be made out of interlockedCall to avoid extra calls of tryCapture (actual for IE8 and IE9)
-                            window.clearTimeout(timerId);
-                            on(tryCapture);
-                            listening = true;
-                        }, 5);
+                    } else {
+                        listen();
+                        //Check the lock one more time - possibly the lock was released by closing of owner window during subscription
+                        if (!isLockAlreadyCaptured(lockId)) {
+                            stopListening();
+                            setLock(lockObject);
+                            captured = true;
+                            callback();
+                        }
                     }
                 });
             }
@@ -97,30 +109,6 @@
             tryCapture();
         }
         return lockObject;
-    };
-
-    function getLock (lockId) {
-        var lockStorageId = lockIdPrefix + lockId;
-        var serializedLock = SJ.localStorage.getItem(lockStorageId);
-        var result = null;
-        if (serializedLock) {
-            var parts = serializedLock.split('.');
-            result = {
-                timestamp: parseInt(parts[0]) || 0,
-                lockerId: parts[1]
-            };
-        }
-        return result;
-    };
-
-    function setLock (lockId, timestamp) {
-        var lockStorageId = lockIdPrefix + lockId;
-        SJ.localStorage.setItem(lockStorageId, timestamp + '.' + lockerId);
-    };
-
-    function removeLock (lockId) {
-        var lockStorageId = lockIdPrefix + lockId;
-        SJ.localStorage.removeItem(lockStorageId);
     };
 
     function onStorageChanged (event) {
@@ -136,7 +124,7 @@
 
     function clearJunkLocks (callback) {
         var itemsToRemove = [];
-        SJ.iwc.WindowsMonitor.onReady(function () {
+        SJ.iwc.WindowMonitor.onReady(function () {
             SJ.localStorage.forEach(function (itemKey, itemValue) {
                 if (itemValue && (itemKey.substr(0, lockIdPrefix.length) === lockIdPrefix)) {
                     var lockInfo = JSON.parse(itemValue);
@@ -144,8 +132,8 @@
                         itemsToRemove.push(itemKey);
                         return;
                     }
-                    var lockBelongsToThisWindow = lockInfo.ownerWindowId === SJ.iwc.WindowsMonitor.getThisWindowId();
-                    var lockBelongsToClosedWindow = !SJ.iwc.WindowsMonitor.isWindowOpen(lockInfo.ownerWindowId);
+                    var lockBelongsToThisWindow = lockInfo.ownerWindowId === SJ.iwc.WindowMonitor.getThisWindowId();
+                    var lockBelongsToClosedWindow = !SJ.iwc.WindowMonitor.isWindowOpen(lockInfo.ownerWindowId);
                     var lockId = itemKey.substr(lockIdPrefix.length);
                     if (lockBelongsToClosedWindow || (lockBelongsToThisWindow && (findLock(lockId) === -1))) {//junk lock
                         itemsToRemove.push(itemKey);
@@ -180,7 +168,7 @@
         var now = (new Date()).getTime();
         var lockInfo = {
             timestamp: now,
-            ownerWindowId: SJ.iwc.WindowsMonitor.getThisWindowId()
+            ownerWindowId: SJ.iwc.WindowMonitor.getThisWindowId()
         };
         var lockCellId = lockIdPrefix + lockObject.lockId;
         SJ.localStorage.setItem(lockCellId, JSON.stringify(lockInfo));
@@ -196,7 +184,7 @@
         var serializedData = SJ.localStorage.getItem(lockCellId);
         if (serializedData) {
             var lockInfo = JSON.parse(serializedData);
-            if (SJ.iwc.WindowsMonitor.getThisWindowId() === lockInfo.ownerWindowId) {
+            if (SJ.iwc.WindowMonitor.getThisWindowId() === lockInfo.ownerWindowId) {
                 SJ.localStorage.removeItem(lockCellId);
             }
         }
@@ -208,7 +196,7 @@
         var serializedData = SJ.localStorage.getItem(lockCellId);
         if (serializedData) {
             var lockInfo = JSON.parse(serializedData);
-            return SJ.iwc.WindowsMonitor.isWindowOpen(lockInfo.ownerWindowId);
+            return SJ.iwc.WindowMonitor.isWindowOpen(lockInfo.ownerWindowId);
         }
         return false;
     };
@@ -222,5 +210,5 @@
         return -1;
     };
 
-    scope.captureLock = captureLock;
+    scope.capture = captureLock;
 })(SJ.ns('iwc.Lock'));

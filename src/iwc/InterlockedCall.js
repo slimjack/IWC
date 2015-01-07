@@ -1,7 +1,7 @@
 ﻿(function (scope) {
     var lockIdPrefix = SJ.iwc.getLocalStoragePrefix() + '_TLOCK_';
     var lockTimeout = 3000;
-    var lockWaitTimeout = 50;
+    var lockCheckInterval = 50;
     var lockerId = SJ.generateGUID();
 
     SJ.localStorage.onChanged(onStorageChanged);
@@ -22,8 +22,22 @@
     function interlockedCall(lockId, fn) {
         var executed = false;
         var listening = false;
-        var waitTimer = null;
+        var listeningTimer = null;
 
+        var listen = function () {
+            if (!listening) {
+                on(tryLock);
+                listeningTimer = window.setInterval(tryLock, lockCheckInterval);
+                listening = true;
+            }
+        };
+        var stopListening = function () {
+            if (listening) {
+                un(tryLock);
+                window.clearInterval(listeningTimer);
+                listening = false;
+            }
+        };
         var tryLock = function () {
             if (executed) return;
 
@@ -31,17 +45,11 @@
             //begin critical section =============================================
             var activeLock = getLock(lockId);
             if (activeLock && now - activeLock.timestamp < lockTimeout) {
-                if (!listening) {
-                    on(tryLock);
-                    listening = true;
-                }
-                if (waitTimer) { window.clearTimeout(waitTimer); }
-                waitTimer = window.setTimeout(tryLock, lockWaitTimeout);
+                listen();
                 return;
             }
             executed = true;
-            if (listening) { un(tryLock); listening = false; }
-            if (waitTimer) { window.clearTimeout(waitTimer); waitTimer = null; }
+            stopListening();
             setLock(lockId, now);
             //end critical section================================================
             //Wait for some time to be sure that during critical section the lock was not intercepted. And then continue lock flow
@@ -50,21 +58,19 @@
                 var activeLock = getLock(lockId);
                 if (!activeLock || (activeLock.timestamp === now && activeLock.lockerId === lockerId)) {
                     //The lock is successfully captured
+                    stopListening();
+                    if (!activeLock) {
+                        setLock(lockId, now);
+                    }
                     fn();
-                    unlock();
+                    removeLock(lockId);
                 } else {
+                    //The lock was intercepted
                     executed = false;
-                    if (!listening) { on(tryLock); listening = true; }
-                    waitTimer = window.setTimeout(tryLock, lockWaitTimeout);
+                    listen();
                 }
             }, 10);//This timeout must be bigger than execution time of critical section.
             //For modern computers critical section execution time is less than 1 ms
-        };
-
-        var unlock = function () {
-            if (listening) { un(lock); listening = false; }
-            if (waitTimer) { window.clearTimeout(waitTimer); waitTimer = null; }
-            removeLock(lockId);
         };
 
         tryLock();

@@ -47,7 +47,7 @@
             me._observable.once('changed', fn, scope);
         },
 
-        unChanged: function (fn, scope) {
+        unsubscribe: function (fn, scope) {
             var me = this;
             me._observable.un('changed', fn, scope);
         },

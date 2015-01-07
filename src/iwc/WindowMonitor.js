@@ -1,10 +1,10 @@
 ﻿(function (scope) {
-    var windowRecordLifeTime = 20000;
-    var obsoleteRequestTimeFrame = 3000;
+    var windowRecordLifeTime = 5000;
+    var obsoleteRequestTimeFrame = 2000;
     var openWindows = {};
     var obsoleteWindows = {};
     var thisWindowId = window.name || SJ.generateGUID();
-    var isWindowsMonitorReady = false;
+    var isWindowMonitorReady = false;
     var observable = new SJ.utils.Observable();
     var storageIdPrefix = SJ.iwc.getLocalStoragePrefix() + '_WND_';
 
@@ -62,10 +62,10 @@
     function updateDataInStorage() {
         updateDataFromStorage();
         var now = (new Date()).getTime();
-        vars.openWindows[thisWindowId] = now;
+        openWindows[thisWindowId] = now;
         SJ.localStorage.setItem(storageId, now);
-        if (!isWindowsMonitorReady) {
-            isWindowsMonitorReady = true;
+        if (!isWindowMonitorReady) {
+            isWindowMonitorReady = true;
             observable.fire('windowsmanagerready');
         }
     };
@@ -96,7 +96,7 @@
         }
     };
 
-    function isWindowOpened(windowId) {
+    function isWindowOpen(windowId) {
         return !!openWindows[windowId];
     };
 
@@ -108,20 +108,20 @@
                 newWindows.push(windowId);
             }
         }
-        var removedWindows = [];
-        for (var windowId in vars.openWindows) {
+        var closedWindows = [];
+        for (var windowId in openWindows) {
             if (openWindows.hasOwnProperty(windowId) && !newOpenWindows[windowId]) {
-                removedWindows.push(windowId);
+                closedWindows.push(windowId);
             }
         }
-        if (newWindows.length || removedWindows.length) {
-            onWindowsChanged(newWindows, removedWindows);
+        if (newWindows.length || closedWindows.length) {
+            onWindowsChanged(newWindows, closedWindows);
         }
         openWindows = newOpenWindows;
     };
 
-    function onWindowsChanged(newWindows, removedWindows) {
-        observable.fire('windowschanged', newWindows, removedWindows);
+    function onWindowsChanged(newWindows, closedWindows) {
+        observable.fire('windowschanged', newWindows, closedWindows);
     };
 
     function onWindowFocusRequest (windowId) {
@@ -159,14 +159,14 @@
     };
 
     SJ.copy(scope, {
-        isWindowOpen: isWindowOpened,
+        isWindowOpen: isWindowOpen,
 
         setFocus: function (windowId) {
-            SJ.iwc.EventBus.fire('windowfocusrequest', windowId);
-        },
-
-        setThisFocus: function () {
-            onWindowFocusRequest(thisWindowId);
+            if (SJ.isUndefined(windowId)) {
+                onWindowFocusRequest(thisWindowId);
+            } else {
+                SJ.iwc.EventBus.fire('windowfocusrequest', windowId);
+            }
         },
 
         getThisWindowId: function () {
@@ -174,11 +174,11 @@
         },
 
         isReady: function () {
-            return isWindowsMonitorReady;
+            return isWindowMonitorReady;
         },
 
         onReady: function (fn, scope) {
-            if (isWindowsMonitorReady) {
+            if (isWindowMonitorReady) {
                 fn.call(scope);
             } else {
                 observable.once('windowsmanagerready', fn, scope);
@@ -189,8 +189,12 @@
             observable.on('windowschanged', fn, scope);
         },
 
+        onceWindowsChanged: function (fn, scope) {
+            observable.once('windowschanged', fn, scope);
+        },
+
         unsubscribe: function (fn, scope) {
             observable.un('windowschanged', fn, scope);
         }
     });
-})(SJ.ns('iwc.WindowsMonitor'));
+})(SJ.ns('iwc.WindowMonitor'));
