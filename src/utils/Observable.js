@@ -1,4 +1,5 @@
-﻿(function (scope) {
+﻿//https://github.com/slimjack/IWC
+(function (scope) {
     function decorate(target) {
         var listeners = {};
 

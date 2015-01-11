@@ -1,4 +1,5 @@
-﻿(function (scope) {
+﻿//https://github.com/slimjack/IWC
+(function (scope) {
     var lockIdPrefix = SJ.iwc.getLocalStoragePrefix() + '_TLOCK_';
     var lockTimeout = 3000;
     var lockCheckInterval = 50;

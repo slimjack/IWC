@@ -1,4 +1,5 @@
-﻿(function (scope) {
+﻿//https://github.com/slimjack/IWC
+(function (scope) {
 
     var SharedData = function (dataId) {
         var me = this;

@@ -1,4 +1,5 @@
-﻿(function (scope) {
+﻿//https://github.com/slimjack/IWC
+(function (scope) {
     var busNodeId = SJ.generateGUID();
     var observableOnlyExternal = new SJ.utils.Observable();
     var observableAll = new SJ.utils.Observable();//for subscribers which listen for all events including genereted from this window

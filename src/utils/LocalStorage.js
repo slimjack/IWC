@@ -1,4 +1,5 @@
-﻿(function (scope) {
+﻿//https://github.com/slimjack/IWC
+(function (scope) {
     //LocalStorage wrapper is used to abstract from some issues related to different browsers
     var originalLocalStorage = window.localStorage;
     if (typeof originalLocalStorage === 'undefined') {

@@ -1,4 +1,5 @@
 ﻿///#source 1 1 /src/sj.js
+//https://github.com/slimjack/IWC
 var SJ = SJ || {};
 SJ.ns = function createNameSpace(namespace) {
     var nsparts = namespace.split(".");
@@ -16,6 +17,7 @@ SJ.ns = function createNameSpace(namespace) {
     return parent;
 };
 ///#source 1 1 /src/utils/BasicUtils.js
+//https://github.com/slimjack/IWC
 (function (scope) {
     var fixedHandlers = {};
     var handlerId = 0;
@@ -148,6 +150,7 @@ SJ.ns = function createNameSpace(namespace) {
 })(SJ);
 
 ///#source 1 1 /src/utils/Observable.js
+//https://github.com/slimjack/IWC
 (function (scope) {
     function decorate(target) {
         var listeners = {};
@@ -239,6 +242,7 @@ SJ.ns = function createNameSpace(namespace) {
 })(SJ.ns('utils'));
 
 ///#source 1 1 /src/utils/LocalStorage.js
+//https://github.com/slimjack/IWC
 (function (scope) {
     //LocalStorage wrapper is used to abstract from some issues related to different browsers
     var originalLocalStorage = window.localStorage;
@@ -406,6 +410,7 @@ SJ.ns = function createNameSpace(namespace) {
     };
 })(SJ);
 ///#source 1 1 /src/iwc/iwc.js
+//https://github.com/slimjack/IWC
 (function (scope) {
     var localStoragePerfix = 'IWC_' + SJ.appName;
     scope.getLocalStoragePrefix = function () {
@@ -415,6 +420,7 @@ SJ.ns = function createNameSpace(namespace) {
     SJ.localStorage.setVersion(localStoragePerfix, scope.$version);
 })(SJ.ns('iwc'));
 ///#source 1 1 /src/iwc/InterlockedCall.js
+//https://github.com/slimjack/IWC
 (function (scope) {
     var lockIdPrefix = SJ.iwc.getLocalStoragePrefix() + '_TLOCK_';
     var lockTimeout = 3000;
@@ -532,6 +538,7 @@ SJ.ns = function createNameSpace(namespace) {
     SJ.interlockedCall = interlockedCall;
 })(SJ.ns('iwc.Lock'));
 ///#source 1 1 /src/iwc/SharedData.js
+//https://github.com/slimjack/IWC
 (function (scope) {
 
     var SharedData = function (dataId) {
@@ -608,6 +615,7 @@ SJ.ns = function createNameSpace(namespace) {
     scope.SharedData = SharedData;
 })(SJ.ns('iwc'));
 ///#source 1 1 /src/iwc/EventBus.js
+//https://github.com/slimjack/IWC
 (function (scope) {
     var busNodeId = SJ.generateGUID();
     var observableOnlyExternal = new SJ.utils.Observable();
@@ -664,6 +672,7 @@ SJ.ns = function createNameSpace(namespace) {
     });
 })(SJ.ns('iwc.EventBus'));
 ///#source 1 1 /src/iwc/WindowMonitor.js
+//https://github.com/slimjack/IWC
 (function (scope) {
     var windowRecordLifeTime = 5000;
     var obsoleteRequestTimeFrame = 2000;
@@ -866,6 +875,7 @@ SJ.ns = function createNameSpace(namespace) {
 })(SJ.ns('iwc.WindowMonitor'));
 
 ///#source 1 1 /src/iwc/Lock.js
+//https://github.com/slimjack/IWC
 (function (scope) {
     var lockIdPrefix = SJ.iwc.getLocalStoragePrefix() + '_LOCK_';
     var lockCheckInterval = 500;

@@ -1,4 +1,5 @@
-﻿(function (scope) {
+﻿//https://github.com/slimjack/IWC
+(function (scope) {
     var fixedHandlers = {};
     var handlerId = 0;
     var basicUtils = {

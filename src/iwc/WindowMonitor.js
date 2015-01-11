@@ -1,4 +1,5 @@
-﻿(function (scope) {
+﻿//https://github.com/slimjack/IWC
+(function (scope) {
     var windowRecordLifeTime = 5000;
     var obsoleteRequestTimeFrame = 2000;
     var openWindows = {};

@@ -1,4 +1,5 @@
-﻿(function (scope) {
+﻿//https://github.com/slimjack/IWC
+(function (scope) {
     var localStoragePerfix = 'IWC_' + SJ.appName;
     scope.getLocalStoragePrefix = function () {
         return localStoragePerfix;
