@@ -53,10 +53,12 @@ Storage item 'myStorageKey' will not be changed between getItem and setItem.
 - `callback` - function which will be executed when lock is captured.
 
 ######Return value:
-Returns lock object which allows to release lock and track its state. Lock object methods:
-    - `isCaptured()` - returns true if lock is captured.
-    - `isReleased()` - returns true if lock is released.
-    - `release()` - releases captured lock or cancels lock request.
+Returns lock object which allows to release lock and track its state.
+Lock object methods:
+
+- `isCaptured()` - returns true if lock is captured.
+- `isReleased()` - returns true if lock is released.
+- `release()` - releases captured lock or cancels lock request.
 
 ######Description:
 `lock` guarantees that only one window holds the lock. Lock can be captured by another window only if holder window is closed or lock is released.
