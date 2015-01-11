@@ -135,13 +135,17 @@
                 } else {
                     itemValue = originalLocalStorage.getItem(itemKey);
                 }
-                fn(itemKey, itemValue);
+                if (fn(itemKey, itemValue) === false) {
+                    break;
+                }
             }
         } : function (fn) {
             for (var i = 0; i < originalLocalStorage.length; i++) {
                 var itemKey = originalLocalStorage.key(i);
                 var itemValue = originalLocalStorage.getItem(itemKey);
-                fn(itemKey, itemValue);
+                if (fn(itemKey, itemValue) === false) {
+                    break;
+                }
             }
         },
         setVersion: function (storagePrefix, version) {

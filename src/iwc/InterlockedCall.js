@@ -112,4 +112,5 @@
     };
 
     scope.interlockedCall = interlockedCall;
+    SJ.interlockedCall = interlockedCall;
 })(SJ.ns('iwc.Lock'));

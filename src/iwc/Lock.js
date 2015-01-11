@@ -211,4 +211,5 @@
     };
 
     scope.capture = captureLock;
+    SJ.lock = captureLock;
 })(SJ.ns('iwc.Lock'));
