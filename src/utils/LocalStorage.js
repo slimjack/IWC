@@ -152,14 +152,16 @@
         setVersion: function (storagePrefix, version) {
             var me = this;
             var currentVersion = me.getItem(storagePrefix);
-            if (currentVersion) {
-                if (currentVersion !== version.toString()) {
-                    me.forEach(function (key) {
-                        if (key.substr(0, storagePrefix.length) === storagePrefix) {
-                            me.removeItem(key);
-                        }
-                    });
-                }
+            if (currentVersion && (currentVersion !== version)) {
+                var itemsToRemove = [];
+                me.forEach(function (key) {
+                    if (key.substr(0, storagePrefix.length) === storagePrefix) {
+                        itemsToRemove.push(key);
+                    }
+                });
+                itemsToRemove.forEach(function (key) {
+                    me.removeItem(key);
+                });
             }
             me.setItem(storagePrefix, version);
         }

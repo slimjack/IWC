@@ -41,7 +41,7 @@ SJ.ns = function createNameSpace(namespace) {
             };
             fixedHandlers[handler.handlerId] = handler;
             if (window.addEventListener) {
-                window.addEventListener(eventName, fixedHandler);
+                window.addEventListener(eventName, fixedHandler, false);
             } else if (window.attachEvent) {
                 window.attachEvent('on' + eventName, fixedHandler);
             }
@@ -49,7 +49,7 @@ SJ.ns = function createNameSpace(namespace) {
 
         windowUn: function (eventName, handler) {
             if (window.removeEventListener) {
-                window.removeEventListener(eventName, fixedHandlers[handler.handlerId]);
+                window.removeEventListener(eventName, fixedHandlers[handler.handlerId], false);
             } else if (window.detachEvent) {
                 window.detachEvent('un' + eventName, fixedHandlers[handler.handlerId]);
             }
@@ -114,36 +114,6 @@ SJ.ns = function createNameSpace(namespace) {
 
         isBoolean: function (value) {
             return typeof value === 'boolean';
-        },
-
-        forEach: function (iterable, fn) {
-            if (this.isArray(iterable)) {
-                var length = iterable.length;
-                for (var i = 0; i < length; i++) {
-                    if (fn(iterable[i], i) === false) {
-                        break;
-                    }
-                }
-            } else if (this.isObject(iterable)) {
-                for (var propName in iterable) {
-                    if (iterable.hasOwnProperty(propName)) {
-                        if (fn(iterable[propName], propName) === false) {
-                            break;
-                        }
-                    }
-                }
-            }
-        },
-
-        first: function (iterable, fn) {
-            var result = null;
-            this.forEach(iterable, function (value) {
-                if (fn(value)) {
-                    result = value;
-                    return false;
-                }
-            });
-            return result;
         }
     };
     basicUtils.copy(scope, basicUtils);
@@ -396,14 +366,16 @@ SJ.ns = function createNameSpace(namespace) {
         setVersion: function (storagePrefix, version) {
             var me = this;
             var currentVersion = me.getItem(storagePrefix);
-            if (currentVersion) {
-                if (currentVersion !== version.toString()) {
-                    me.forEach(function (key) {
-                        if (key.substr(0, storagePrefix.length) === storagePrefix) {
-                            me.removeItem(key);
-                        }
-                    });
-                }
+            if (currentVersion && (currentVersion !== version)) {
+                var itemsToRemove = [];
+                me.forEach(function (key) {
+                    if (key.substr(0, storagePrefix.length) === storagePrefix) {
+                        itemsToRemove.push(key);
+                    }
+                });
+                itemsToRemove.forEach(function (key) {
+                    me.removeItem(key);
+                });
             }
             me.setItem(storagePrefix, version);
         }
@@ -416,14 +388,14 @@ SJ.ns = function createNameSpace(namespace) {
     scope.getLocalStoragePrefix = function () {
         return localStoragePerfix;
     };
-    scope.$version = '0.1';
+    scope.$version = '0.1.1';
     SJ.localStorage.setVersion(localStoragePerfix, scope.$version);
 })(SJ.ns('iwc'));
 ///#source 1 1 /src/iwc/InterlockedCall.js
 //https://github.com/slimjack/IWC
 (function (scope) {
     var lockIdPrefix = SJ.iwc.getLocalStoragePrefix() + '_TLOCK_';
-    var lockTimeout = 3000;
+    var lockTimeout = 3 * 1000;
     var lockCheckInterval = 50;
     var lockerId = SJ.generateGUID();
 
@@ -446,6 +418,8 @@ SJ.ns = function createNameSpace(namespace) {
         var executed = false;
         var listening = false;
         var listeningTimer = null;
+        //if testingMode set, lockTimeout may be defined from outside and lock is not released automatically after fn execution
+        var _lockTimeout = scope.testingMode ? scope.lockTimeout || lockTimeout : lockTimeout;
 
         var listen = function () {
             if (!listening) {
@@ -467,7 +441,7 @@ SJ.ns = function createNameSpace(namespace) {
             var now = (new Date()).getTime();
             //begin critical section =============================================
             var activeLock = getLock(lockId);
-            if (activeLock && now - activeLock.timestamp < lockTimeout) {
+            if (activeLock && now - activeLock.timestamp < _lockTimeout) {
                 listen();
                 return;
             }
@@ -486,7 +460,9 @@ SJ.ns = function createNameSpace(namespace) {
                         setLock(lockId, now);
                     }
                     fn();
-                    removeLock(lockId);
+                    if (!scope.testingMode) {
+                        removeLock(lockId);
+                    }
                 } else {
                     //The lock was intercepted
                     executed = false;
@@ -541,9 +517,10 @@ SJ.ns = function createNameSpace(namespace) {
 //https://github.com/slimjack/IWC
 (function (scope) {
 
-    var SharedData = function (dataId) {
+    var SharedData = function (dataId, initialValue) {
         var me = this;
         me._dataId = dataId;
+        me._initialValue = initialValue;
         me._observable = new SJ.utils.Observable();
         me._serializedData = SJ.localStorage.getItem(me._dataId);
         SJ.localStorage.onChanged(me.onStorageChanged, me, true);
@@ -555,11 +532,11 @@ SJ.ns = function createNameSpace(namespace) {
         get: function () {
             var me = this;
             me._serializedData = SJ.localStorage.getItem(me._dataId);
-            var data;
+            var data = null;
             if (me._serializedData) {
                 data = JSON.parse(me._serializedData);
             }
-            return data || {};
+            return data;
         },
 
         set: function (value) {
@@ -603,7 +580,7 @@ SJ.ns = function createNameSpace(namespace) {
 
         onStorageChanged: function (event) {
             var me = this;
-            if ((event.key && event.key === me._dataId) || event.key) {
+            if ((event.key && event.key === me._dataId) || !event.key) {
                 var serializedData = SJ.localStorage.getItem(me._dataId);
                 if (serializedData !== me._serializedData) {
                     me._observable.fire('changed', data);
@@ -620,7 +597,7 @@ SJ.ns = function createNameSpace(namespace) {
     var busNodeId = SJ.generateGUID();
     var observableOnlyExternal = new SJ.utils.Observable();
     var observableAll = new SJ.utils.Observable();//for subscribers which listen for all events including genereted from this window
-    var storageId = SJ.iwc.getLocalStoragePrefix() + '_EVENTBUS';
+    var storageId = SJ.iwc.getLocalStoragePrefix() + '_EBUS';
     SJ.localStorage.onChanged(onStorageChanged);
 
     function onStorageChanged (event) {
@@ -632,7 +609,7 @@ SJ.ns = function createNameSpace(namespace) {
             }
         }
     };
-    
+
     function fire () {
         var busEvent = {
             senderBusNodeId: busNodeId,

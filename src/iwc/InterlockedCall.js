@@ -1,7 +1,7 @@
 ﻿//https://github.com/slimjack/IWC
 (function (scope) {
     var lockIdPrefix = SJ.iwc.getLocalStoragePrefix() + '_TLOCK_';
-    var lockTimeout = 3000;
+    var lockTimeout = 3 * 1000;
     var lockCheckInterval = 50;
     var lockerId = SJ.generateGUID();
 
@@ -24,6 +24,8 @@
         var executed = false;
         var listening = false;
         var listeningTimer = null;
+        //if testingMode set, lockTimeout may be defined from outside and lock is not released automatically after fn execution
+        var _lockTimeout = scope.testingMode ? scope.lockTimeout || lockTimeout : lockTimeout;
 
         var listen = function () {
             if (!listening) {
@@ -45,7 +47,7 @@
             var now = (new Date()).getTime();
             //begin critical section =============================================
             var activeLock = getLock(lockId);
-            if (activeLock && now - activeLock.timestamp < lockTimeout) {
+            if (activeLock && now - activeLock.timestamp < _lockTimeout) {
                 listen();
                 return;
             }
@@ -64,7 +66,9 @@
                         setLock(lockId, now);
                     }
                     fn();
-                    removeLock(lockId);
+                    if (!scope.testingMode) {
+                        removeLock(lockId);
+                    }
                 } else {
                     //The lock was intercepted
                     executed = false;

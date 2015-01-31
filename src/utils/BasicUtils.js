@@ -22,7 +22,7 @@
             };
             fixedHandlers[handler.handlerId] = handler;
             if (window.addEventListener) {
-                window.addEventListener(eventName, fixedHandler);
+                window.addEventListener(eventName, fixedHandler, false);
             } else if (window.attachEvent) {
                 window.attachEvent('on' + eventName, fixedHandler);
             }
@@ -30,7 +30,7 @@
 
         windowUn: function (eventName, handler) {
             if (window.removeEventListener) {
-                window.removeEventListener(eventName, fixedHandlers[handler.handlerId]);
+                window.removeEventListener(eventName, fixedHandlers[handler.handlerId], false);
             } else if (window.detachEvent) {
                 window.detachEvent('un' + eventName, fixedHandlers[handler.handlerId]);
             }
@@ -95,36 +95,6 @@
 
         isBoolean: function (value) {
             return typeof value === 'boolean';
-        },
-
-        forEach: function (iterable, fn) {
-            if (this.isArray(iterable)) {
-                var length = iterable.length;
-                for (var i = 0; i < length; i++) {
-                    if (fn(iterable[i], i) === false) {
-                        break;
-                    }
-                }
-            } else if (this.isObject(iterable)) {
-                for (var propName in iterable) {
-                    if (iterable.hasOwnProperty(propName)) {
-                        if (fn(iterable[propName], propName) === false) {
-                            break;
-                        }
-                    }
-                }
-            }
-        },
-
-        first: function (iterable, fn) {
-            var result = null;
-            this.forEach(iterable, function (value) {
-                if (fn(value)) {
-                    result = value;
-                    return false;
-                }
-            });
-            return result;
         }
     };
     basicUtils.copy(scope, basicUtils);

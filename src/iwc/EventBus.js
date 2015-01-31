@@ -3,7 +3,7 @@
     var busNodeId = SJ.generateGUID();
     var observableOnlyExternal = new SJ.utils.Observable();
     var observableAll = new SJ.utils.Observable();//for subscribers which listen for all events including genereted from this window
-    var storageId = SJ.iwc.getLocalStoragePrefix() + '_EVENTBUS';
+    var storageId = SJ.iwc.getLocalStoragePrefix() + '_EBUS';
     SJ.localStorage.onChanged(onStorageChanged);
 
     function onStorageChanged (event) {
@@ -15,7 +15,7 @@
             }
         }
     };
-    
+
     function fire () {
         var busEvent = {
             senderBusNodeId: busNodeId,

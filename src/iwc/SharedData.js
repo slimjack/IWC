@@ -1,9 +1,10 @@
 ﻿//https://github.com/slimjack/IWC
 (function (scope) {
 
-    var SharedData = function (dataId) {
+    var SharedData = function (dataId, initialValue) {
         var me = this;
         me._dataId = dataId;
+        me._initialValue = initialValue;
         me._observable = new SJ.utils.Observable();
         me._serializedData = SJ.localStorage.getItem(me._dataId);
         SJ.localStorage.onChanged(me.onStorageChanged, me, true);
@@ -15,11 +16,11 @@
         get: function () {
             var me = this;
             me._serializedData = SJ.localStorage.getItem(me._dataId);
-            var data;
+            var data = null;
             if (me._serializedData) {
                 data = JSON.parse(me._serializedData);
             }
-            return data || {};
+            return data;
         },
 
         set: function (value) {
@@ -63,7 +64,7 @@
 
         onStorageChanged: function (event) {
             var me = this;
-            if ((event.key && event.key === me._dataId) || event.key) {
+            if ((event.key && event.key === me._dataId) || !event.key) {
                 var serializedData = SJ.localStorage.getItem(me._dataId);
                 if (serializedData !== me._serializedData) {
                     me._observable.fire('changed', data);
