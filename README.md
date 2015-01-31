@@ -18,7 +18,7 @@ Library doesn't use localStorage directly - it is accessed via wrapper **SJ.loca
 
 #Where it can be used
 1. **Connection sharing.** This can be usefull when you need to listen for server events. You may have only one real connection in one of the windows.
- This connection can be shared by means of IWC (EventBus or SharedData) across other windows, so they don't need to have real connection.
+ This connection can be shared by means of IWC ('EventBus' or 'SharedData') across other windows, so they don't need to have real connection.
  If page which holds the real connection is closed, another one becomes a real connection holder. Just put connection establishing in a lock:
  
     ```js
@@ -34,8 +34,8 @@ Library doesn't use localStorage directly - it is accessed via wrapper **SJ.loca
         });
     });
     ```
-2. **Content synchronization**. For example, you have a list of items in one window and details are displayed in another window. You can use EventBus to notify details window about selection changes.
-3. **Single window**. If you have special window which should be opened in one instance, use WindowMonitor:
+2. **Content synchronization**. For example, you have a list of items in one window and details are displayed in another window. You can use 'EventBus' to notify details window about selection changes.
+3. **Single window**. If you have special window which should be opened in one instance, use 'WindowMonitor':
 
     ```js
     function openSpecialWindow () {
