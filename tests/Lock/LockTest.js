@@ -11,23 +11,28 @@ describe("Lock.", function () {
         done();
     });
     it('Lock.capture(). Captured lock should be held only by one window until window is closed or lock is released', function (done) {
-        setTimeout(function () {
+        var testFn = function () {
             var numOfCapturedLocks = 0;
             var capturedLock = null;
-            SJ.forEach(childWindows, function (childWindow) {
-                expect(childWindow.lock.isCaptured()).toEqual(childWindow.captureCallbackExecuted);
-                if (childWindow.lock.isCaptured()) {
-                    capturedLock = childWindow.lock;
-                    numOfCapturedLocks++;
+            childWindows.forEach(function(childWindow) {
+                if (childWindow.lock) {
+                    expect(childWindow.lock.isCaptured()).toEqual(childWindow.captureCallbackExecuted);
+                    if (childWindow.lock.isCaptured()) {
+                        capturedLock = childWindow.lock;
+                        numOfCapturedLocks++;
+                    }
                 }
             });
-            expect(numOfCapturedLocks).toEqual(1);
+            if (numOfCapturedLocks === 0) {
+                setTimeout(testFn, 500);
+                return;
+            }
             capturedLock.release();
             setTimeout(function () {
                 var numOfCapturedLocks = 0;
                 var numOfReleasedLocks = 0;
                 var capturedLock = null;
-                SJ.forEach(childWindows, function (childWindow) {
+                childWindows.forEach(function (childWindow) {
                     expect(childWindow.lock.isCaptured() || childWindow.lock.isReleased()).toEqual(childWindow.captureCallbackExecuted);
                     if (childWindow.lock.isCaptured()) {
                         capturedLock = childWindow.lock;
@@ -44,19 +49,20 @@ describe("Lock.", function () {
                     done();
                 });
                 setTimeout(function () {
-                    SJ.forEach(childWindows, function (childWindow) {
+                    childWindows.forEach(function (childWindow) {
                         childWindow.close();
                     });
                     childWindows.length = 0;
                 }, 1000);
             }, 500);
-        }, 2000);
+        };
+        testFn();
     });
 });
 
 
 SJ.windowOn('unload', function () {
-    SJ.forEach(childWindows, function (childWindow) {
+    childWindows.forEach(function (childWindow) {
         childWindow.close();
     });
 });

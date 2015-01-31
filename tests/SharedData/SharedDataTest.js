@@ -12,7 +12,7 @@ describe("SharedData.", function () {
             var sharedData = new SJ.iwc.SharedData('testSharedData');
             sharedData.set({ field: 2 });
             setTimeout(function() {
-                SJ.forEach(childWindows, function (childWindow) {
+                childWindows.forEach(function (childWindow) {
                     var valueInChild = childWindow.sharedData.get();
                     expect(valueInChild).not.toBeNull();
                     expect(valueInChild.field).toEqual(2);
@@ -24,7 +24,7 @@ describe("SharedData.", function () {
                 });
                 setTimeout(function () {
                     console.log('check');
-                    SJ.forEach(childWindows, function (childWindow) {
+                    childWindows.forEach(function (childWindow) {
                         var valueInChild = childWindow.sharedData.get();
                         expect(valueInChild).not.toBeNull();
                         expect(valueInChild.field).toEqual('testvalue');
@@ -37,7 +37,7 @@ describe("SharedData.", function () {
 });
 
 SJ.windowOn('unload', function () {
-    SJ.forEach(childWindows, function (childWindow) {
+    childWindows.forEach(function (childWindow) {
         childWindow.close();
     });
 });

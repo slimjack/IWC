@@ -1,25 +1,55 @@
-﻿SJ.localStorage.removeItem('interlockedCall');
-var childWindow = window.open('interlockedCall-test-child.html', 'interlockedCall-test-child');
+﻿var numOfChildWindows = 5;
+var childWindows = [];
+for (var i = 0; i < numOfChildWindows; i++) {
+    var windowName = 'interlockedCall-test-child' + i;
+    childWindows.push(window.open('interlockedCall-test-child.html', windowName));
+}
+var childWindow = null;
+var onChildWindowLoad = function (fn) {
+    if (childWindows[0].addEventListener) {
+        childWindows[0].addEventListener('load', fn, true);
+    } else if (childWindows[0].attachEvent) {
+        childWindows[0].attachEvent('onload', fn);
+    }
+};
+jasmine.DEFAULT_TIMEOUT_INTERVAL = numOfChildWindows * 15000 + 20000;
+SJ.iwc.Lock.testingMode = true;
+SJ.iwc.Lock.lockTimeout = 10000;
 
 describe("Lock.", function () {
     beforeEach(function (done) { done(); });
     it('Lock.interlockedCall() should provide mutual lock for specified Id', function (done) {
-        SJ.localStorage.onChanged(function (event) {
-            if ((event.key && event.key === 'interlockedCall') || (!event.key && SJ.localStorage.getItem('interlockedCall'))) {
-                var lockedByChild = true;
-                SJ.iwc.Lock.interlockedCall('interlockedCall', function () {
-                    expect(lockedByChild).toBe(false);
-                    done();
+        onChildWindowLoad(function () {
+            var getNumOfPerformedChildInterlockedCall = function() {
+                var numOfInterlockedCalls = 0;
+                childWindows.forEach(function (childWindow) {
+                    if (childWindow.captureInterlockedCallPerformed) {
+                        numOfInterlockedCalls++;
+                    }
                 });
-                setTimeout(function () {
-                    expect(lockedByChild).toBe(true);
-                    lockedByChild = false;
-                }, 1000);
+                return numOfInterlockedCalls;
             }
+            var testFn = function() {
+                if (getNumOfPerformedChildInterlockedCall() > 0) {
+                    var startTimeStamp = new Date().getTime();
+                    console.log(startTimeStamp);
+                    SJ.iwc.Lock.interlockedCall('interlockedCall', function () {
+                        var now = new Date().getTime();
+                        expect(now - startTimeStamp).toBeGreaterThan(5000);
+                        console.log("lock time " + (now - startTimeStamp));
+                        done();
+                    });
+                } else {
+                    setTimeout(testFn, 500);
+                }
+            };
+            testFn();
         });
     });
 });
 
-SJ.windowOn('unload', function() {
-    childWindow.close();
+SJ.windowOn('unload', function () {
+    childWindows.forEach(function (childWindow) {
+        childWindow.close();
+    });
 });

@@ -16,7 +16,7 @@ describe("EventBus.", function () {
     SJ.iwc.EventBus.on('testEvent', function () {
         thisWindowCounter++;
     }, null, true);
-    var numOfChanges = 10000;
+    var numOfEvents = 5000;
     var i = 0;
     var changesPerInterval = 100;
     var fillFunc = function () {
@@ -24,28 +24,25 @@ describe("EventBus.", function () {
             SJ.iwc.EventBus.fire('testEvent', i);
             i++;
         }
-        if (i < numOfChanges) {
+        if (i < numOfEvents) {
             setTimeout(fillFunc, 10);
         }
     };
     setTimeout(fillFunc, 1000);
     it('Events may be handled or not handled by event sender', function (done) {
-        SJ.iwc.EventBus.once('testEvent', function() {
-            expect('Events fired in this window').toBe('handled only by other windows');
-        });
         setTimeout(function() {
             expect(thisWindowCounter).toEqual(i);
             done();
         }, 10000);
     });
-    it('Event propagation stability. Num of changes: ' + numOfChanges, function (done) {
-        SJ.forEach(childWindows, function (childWindow) {
+    it('Event propagation stability. Num of events: ' + numOfEvents, function (done) {
+        childWindows.forEach(function (childWindow) {
             expect(childWindow.data.onCounter).toEqual(i);
         });
         done();
     });
-    it('Data propagation stability. Num of changes: ' + numOfChanges, function (done) {
-        SJ.forEach(childWindows, function (childWindow) {
+    it('Data propagation stability. Num of events: ' + numOfEvents, function (done) {
+        childWindows.forEach(function (childWindow) {
             expect(childWindow.data.testValue).toEqual(i - 1);
         });
         done();
@@ -54,7 +51,7 @@ describe("EventBus.", function () {
 
 
 SJ.windowOn('unload', function () {
-    SJ.forEach(childWindows, function (childWindow) {
+    childWindows.forEach(function (childWindow) {
         childWindow.close();
     });
 });

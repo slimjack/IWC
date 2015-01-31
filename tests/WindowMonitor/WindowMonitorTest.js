@@ -20,14 +20,14 @@ describe("WindowMonitor.", function () {
     it('WindowMonitor should provide actual information about open windows', function (done) {
         setTimeout(function() {
             expect(numOfOpenedWindows).toEqual(childWindows.length);
-            SJ.forEach(childWindows, function (childWindow) {
+            childWindows.forEach(function (childWindow) {
                 expect(SJ.iwc.WindowMonitor.isWindowOpen(childWindow.name)).toBe(true);
             });
             childWindows.shift().close();
             childWindows.shift().close();
             setTimeout(function () {
                 expect(numOfOpenedWindows).toEqual(childWindows.length);
-                SJ.forEach(childWindows, function (childWindow) {
+                childWindows.forEach(function (childWindow) {
                     expect(SJ.iwc.WindowMonitor.isWindowOpen(childWindow.name)).toBe(true);
                 });
                 done();
@@ -37,7 +37,7 @@ describe("WindowMonitor.", function () {
 });
 
 SJ.windowOn('unload', function () {
-    SJ.forEach(childWindows, function (childWindow) {
+    childWindows.forEach(function (childWindow) {
         childWindow.close();
     });
 });
