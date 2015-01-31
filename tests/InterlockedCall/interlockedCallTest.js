@@ -12,39 +12,37 @@ var onChildWindowLoad = function (fn) {
         childWindows[0].attachEvent('onload', fn);
     }
 };
-jasmine.DEFAULT_TIMEOUT_INTERVAL = numOfChildWindows * 15000 + 20000;
 SJ.iwc.Lock.testingMode = true;
 SJ.iwc.Lock.lockTimeout = 10000;
+jasmine.DEFAULT_TIMEOUT_INTERVAL = numOfChildWindows * SJ.iwc.Lock.lockTimeout + 20000;
 
 describe("Lock.", function () {
     beforeEach(function (done) { done(); });
     it('Lock.interlockedCall() should provide mutual lock for specified Id', function (done) {
-        onChildWindowLoad(function () {
-            var getNumOfPerformedChildInterlockedCall = function() {
-                var numOfInterlockedCalls = 0;
-                childWindows.forEach(function (childWindow) {
-                    if (childWindow.captureInterlockedCallPerformed) {
-                        numOfInterlockedCalls++;
-                    }
-                });
-                return numOfInterlockedCalls;
-            }
-            var testFn = function() {
-                if (getNumOfPerformedChildInterlockedCall() > 0) {
-                    var startTimeStamp = new Date().getTime();
-                    console.log(startTimeStamp);
-                    SJ.iwc.Lock.interlockedCall('interlockedCall', function () {
-                        var now = new Date().getTime();
-                        expect(now - startTimeStamp).toBeGreaterThan(5000);
-                        console.log("lock time " + (now - startTimeStamp));
-                        done();
-                    });
-                } else {
-                    setTimeout(testFn, 500);
+        var getNumOfPerformedChildInterlockedCall = function() {
+            var numOfInterlockedCalls = 0;
+            childWindows.forEach(function (childWindow) {
+                if (childWindow.captureInterlockedCallPerformed) {
+                    numOfInterlockedCalls++;
                 }
-            };
-            testFn();
-        });
+            });
+            return numOfInterlockedCalls;
+        }
+        var testFn = function() {
+            if (getNumOfPerformedChildInterlockedCall() > 0) {
+                var startTimeStamp = new Date().getTime();
+                console.log(startTimeStamp);
+                SJ.iwc.Lock.interlockedCall('interlockedCall', function () {
+                    var now = new Date().getTime();
+                    expect(now - startTimeStamp).toBeGreaterThan(5000);
+                    console.log("lock time " + (now - startTimeStamp));
+                    done();
+                });
+            } else {
+                setTimeout(testFn, 500);
+            }
+        };
+        testFn();
     });
 });
 
