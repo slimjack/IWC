@@ -16,6 +16,57 @@ Library doesn't use localStorage directly - it is accessed via wrapper **SJ.loca
 #Supported browsers
 **IWC** doesn't support IE8 and IE9, but it is planed to add IE9 support. Library was tested on IE10, IE11, Chrome (39.0.2171.95 m) and Firefox(34.0.5) 
 
+#Where it can be used
+1. **Connection sharing.** This can be usefull when you need to listen for server events. You may have only one real connection in one of the windows.
+ This connection can be shared by means of IWC (EventBus or SharedData) across other windows, so they don't need to have real connection.
+ If page which holds the real connection is closed, another one becomes a real connection holder. Just put connection establishing in a lock:
+ 
+```js
+SJ.iwc.EventBus.on('serverevent', function (serverEventName, eventData) {
+    //Process server event. Here we don't need to know if event was received in this window or in another.
+}, null, true);
+SJ.lock('connection', function () {
+    //Establish connection and start to retranslate server events through EventBus
+    //Let's assume that we have a connection object which allows to receive events from server
+    connection.start();
+    connection.on(function (serverEventName, eventData) {
+        SJ.iwc.EventBus.fire('serverevent', serverEventName, eventData);
+    });
+});
+```
+2. **Content synchronization**. For example, you have a list of items in one window and details are displayed in another window. You can use EventBus to notify details window about selection changes.
+3. **Single window**. If you have special window which should be opened in one instance, use WindowMonitor:
+
+```js
+function openSpecialWindow () {
+    //Ensure that WindowMonitor is initialized
+    SJ.iwc.WindowMonitor.onReady(function () {
+        if (!SJ.iwc.WindowMonitor.isWindowOpen('specialwindow')) {
+            //if window is not opened, open it
+            window.open('http://mysite/specialwindow.html', 'specialwindow');
+            //window name 'specialwindow' is used by WindowMonitor as windowId
+        }
+    });
+};
+```
+4. **Data sharing**. For example, you want the shopping cart to display actual data in all windows.
+ So, if user adds something to cart, new item should be displayed immediatelly in all other windows:
+ 
+```js
+var cart = new SJ.iwc.SharedData('cart');
+cart.onChanged(function (cartItems) {
+    //Display cart items
+});
+
+function addToCart(newItem) {
+    cart.change(function (cartItems) {
+        cartItems = cartItems || [];//initialization
+        cartItems.push(newItem);
+        return cartItems;
+    });
+};
+```
+
 #API
 
 ####interlockedCall
@@ -56,8 +107,8 @@ Storage item 'myStorageKey' will not be changed between getItem and setItem.
 Returns lock object which allows to release lock and track its state.
 Lock object methods:
 
-- `isCaptured()` - returns true if lock is captured.
-- `isReleased()` - returns true if lock is released.
+- `isCaptured()` - returns *true* if lock is captured.
+- `isReleased()` - returns *true* if lock is released.
 - `release()` - releases captured lock or cancels lock request.
 
 ######Description:
