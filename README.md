@@ -3,7 +3,7 @@
 
 Inter-window (cross-tab) communication library.
 
-This library provides functionality for data exchange and synchronization between browser windows (tabs). It is based on localStorage. All features are designed to cover situations when window (tab) crashes. 
+This library provides functionality for data exchange and synchronization between browser windows (tabs). It is based on localStorage. All features are designed to cover situations when window (tab) is crashed. 
 #Features:
 - **Interlocked call** guarantees that function is executed only in one window at the same time
 - **Lock** guarantees that only one window holds the lock. Lock can be captured by another window only if holder window is closed or lock is released
