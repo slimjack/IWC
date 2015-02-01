@@ -1,10 +1,9 @@
 ﻿//https://github.com/slimjack/IWC
 (function (scope) {
 
-    var SharedData = function (dataId, initialValue) {
+    var SharedData = function (dataId) {
         var me = this;
         me._dataId = dataId;
-        me._initialValue = initialValue;
         me._observable = new SJ.utils.Observable();
         me._serializedData = SJ.localStorage.getItem(me._dataId);
         SJ.localStorage.onChanged(me.onStorageChanged, me, true);
@@ -23,10 +22,11 @@
             return data;
         },
 
-        set: function (value) {
+        set: function (value, callback) {
             var me = this;
             SJ.iwc.Lock.interlockedCall(me._dataId, function () {
                 me.writeToStorage(value);
+                SJ.callback(callback);
             });
         },
 

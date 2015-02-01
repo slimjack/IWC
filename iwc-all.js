@@ -21,6 +21,7 @@ SJ.ns = function createNameSpace(namespace) {
 (function (scope) {
     var fixedHandlers = {};
     var handlerId = 0;
+    var toString = ({}).toString;
     var basicUtils = {
         appName: window.applicationName || 'DEFAULT',
         generateGUID: function () {
@@ -31,6 +32,13 @@ SJ.ns = function createNameSpace(namespace) {
                 return (c == 'x' ? r : (r & 0x7 | 0x8)).toString(16);
             });
             return uuid;
+        },
+
+        callback: function (callback) {
+            if (SJ.isFunction(callback)) {
+                var args = Array.prototype.slice.call(arguments, 1);
+                callback.apply(window, args);
+            }
         },
 
         windowOn: function (eventName, handler) {
@@ -118,6 +126,23 @@ SJ.ns = function createNameSpace(namespace) {
     };
     basicUtils.copy(scope, basicUtils);
 })(SJ);
+
+///#source 1 1 /src/utils/Object.js
+//https://github.com/slimjack/IWC
+(function (scope) {
+    var ObjectHelper = {
+        each: function (obj, fn) {
+            for (var propName in obj) {
+                if (obj.hasOwnProperty(propName)) {
+                    if (fn(obj[propName], propName) === false) {
+                        break;
+                    }
+                }
+            }
+        }
+    };
+    SJ.copy(scope, ObjectHelper);
+})(SJ.ns('Object'));
 
 ///#source 1 1 /src/utils/Observable.js
 //https://github.com/slimjack/IWC
@@ -517,10 +542,9 @@ SJ.ns = function createNameSpace(namespace) {
 //https://github.com/slimjack/IWC
 (function (scope) {
 
-    var SharedData = function (dataId, initialValue) {
+    var SharedData = function (dataId) {
         var me = this;
         me._dataId = dataId;
-        me._initialValue = initialValue;
         me._observable = new SJ.utils.Observable();
         me._serializedData = SJ.localStorage.getItem(me._dataId);
         SJ.localStorage.onChanged(me.onStorageChanged, me, true);
@@ -539,10 +563,11 @@ SJ.ns = function createNameSpace(namespace) {
             return data;
         },
 
-        set: function (value) {
+        set: function (value, callback) {
             var me = this;
             SJ.iwc.Lock.interlockedCall(me._dataId, function () {
                 me.writeToStorage(value);
+                SJ.callback(callback);
             });
         },
 
@@ -1068,3 +1093,122 @@ SJ.ns = function createNameSpace(namespace) {
     scope.capture = captureLock;
     SJ.lock = captureLock;
 })(SJ.ns('iwc.Lock'));
+///#source 1 1 /src/iwc/Client.js
+//https://github.com/slimjack/IWC
+(function (scope) {
+    var Client = function(serverId) {
+        var me = this;
+        me._serverId = serverId;
+        me._isReady = false;
+        me._observable = SJ.utils.Observable.decorate(me, true);
+        me._serverDescriptionHolder = new SJ.iwc.SharedData(serverId);
+        var serverDescription = me.serverDescriptionHolder.get();
+        if (serverDescription) {
+            me.updateContract(serverDescription);
+        }
+        me._serverDescriptionHolder.onChanged(function (newServerDescription) {
+            me.updateContract(newServerDescription);
+        });
+    };
+
+    Client.prototype = {
+        constructor: Client,
+
+        onReady: function(fn, scope) {
+            var me = this;
+            if (me._isReady) {
+                fn.call(scope);
+            } else {
+                me._observable.once('ready', fn, scope);
+            }
+        },
+
+        //region Private
+        updateContract: function(serverDescription) {
+            var me = this;
+            var serverMethods = serverDescription;
+            serverMethods.forEach(function(methodName) {
+                if (!me[methodName]) {
+                    me[methodName] = me.createProxyMethod(methodName);
+                }
+            });
+            if (!me._isReady) {
+                me._isReady = true;
+                me._observable.fire('ready');
+            }
+        },
+
+        createProxyMethod: function(methodName) {
+            var me = this;
+
+            return function() {
+                var callId = null;
+                var callback = null;
+                var args = Array.prototype.slice.call(arguments, 0);
+                if (args.length && SJ.isFunction(args[args.length - 1])) {
+                    callId = SJ.generateGUID();
+                    callback = args.pop();
+                }
+                var eventData = {
+                    methodName: methodName,
+                    callId: callId,
+                    args: args
+                };
+                SJ.iwc.EventBus.fire('servercall_' + me._serverId, eventData);
+                if (callId) {
+                    SJ.iwc.EventBus.once('servercallback_' + callId, callback);
+                }
+            };
+        }
+        //endregion
+    };
+    scope.Client = Client;
+})(SJ.ns('iwc'));
+///#source 1 1 /src/iwc/Server.js
+//https://github.com/slimjack/IWC
+(function (scope) {
+    var Server = function(serverId, serverConfig, privateConfig) {
+        var me = this;
+        me._serverId = serverId;
+        me._serverDescriptionHolder = new SJ.iwc.SharedData(me._serverId);
+        SJ.copy(me, serverConfig);
+        SJ.copy(me, privateConfig);
+        SJ.lock(serverId, function () {
+            me.updateServerDescription(serverConfig);
+            SJ.iwc.EventBus.on('servercall_' + me._serverId, me.onServerCall, me);
+        });
+    };
+
+    Server.prototype = {
+        constructor: Server,
+
+        //region Private
+        updateServerDescription: function (serverConfig) {
+            var me = this;
+            var serverMethods = [];
+            SJ.Object.each(serverConfig, function (methodName) {
+                serverMethods.push(methodName);
+            });
+            me._serverDescriptionHolder.set(serverMethods);
+        },
+
+        onServerCall: function (eventData) {
+            var me = this;
+            var args = eventData.args || [];
+            if (eventData.callId) {
+                var callback = function() {
+                    var callbackArgs = Array.prototype.slice.call(arguments, 0);
+                    callbackArgs.unshift('servercallback_' + callId);
+                    SJ.iwc.EventBus.fire.apply(SJ.iwc.EventBus, callbackArgs);
+                };
+                args.unshift(callback);
+            } else {
+                //empty callback
+                args.unshift(function() {});
+            }
+            me[eventData.methodName].apply(me, args);
+        }
+        //endregion
+    };
+    scope.Server = Server;
+})(SJ.ns('iwc'));

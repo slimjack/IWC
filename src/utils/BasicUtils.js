@@ -2,6 +2,7 @@
 (function (scope) {
     var fixedHandlers = {};
     var handlerId = 0;
+    var toString = ({}).toString;
     var basicUtils = {
         appName: window.applicationName || 'DEFAULT',
         generateGUID: function () {
@@ -12,6 +13,13 @@
                 return (c == 'x' ? r : (r & 0x7 | 0x8)).toString(16);
             });
             return uuid;
+        },
+
+        callback: function (callback) {
+            if (SJ.isFunction(callback)) {
+                var args = Array.prototype.slice.call(arguments, 1);
+                callback.apply(window, args);
+            }
         },
 
         windowOn: function (eventName, handler) {
