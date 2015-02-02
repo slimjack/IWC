@@ -17,7 +17,7 @@ Library doesn't use localStorage directly - it is accessed via wrapper **SJ.loca
 **IWC** doesn't support IE8 and IE9, but it is planed to add IE9 support. Library was tested on IE10, IE11, Chrome (39.0.2171.95 m) and Firefox(34.0.5) 
 
 #Where it can be used
-1. **Connection sharing.** This can be usefull when you need to listen for server events. You may have only one real connection in one of the windows.
+1. **Connection sharing.** This can be usefull when you need to listen for server events. You may have only one real connection in one of application windows (see [IWC-SignalR](https://github.com/slimjack/IWC-SignalR)).
  This connection can be shared by means of IWC (`EventBus` or `SharedData`) across other windows, so they don't need to have real connection.
  If page which holds the real connection is closed, another one becomes a real connection holder. Just put connection establishing in a lock:
  
