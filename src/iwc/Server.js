@@ -7,6 +7,9 @@
         SJ.copy(me, serverConfig);
         SJ.copy(me, privateConfig);
         SJ.lock(serverId, function () {
+            if (me.initServer) {
+                me.initServer();
+            }
             me.updateServerDescription(serverConfig);
             SJ.iwc.EventBus.on('servercall_' + me._serverId, me.onServerCall, me);
         });
