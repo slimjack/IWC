@@ -499,5 +499,5 @@ To avoid such situations it is recommended to use common key prefix for localSto
 `setVersion` is intended o help with prefix version tracking.
 If specified prefix version differs from current version, all items with specified prefix will be removed from localStorage.
 
-###Applicaion isolation
+###Application isolation
 If you have several different applications under the same origin (e.g. myHost/app1 and myHost/app2), specify the application name in global variable `window.applicationName`. This will isolate IWC's events and locks for each application (browser isolates local storages only for different origins).
