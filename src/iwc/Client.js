@@ -6,7 +6,7 @@
         me._isReady = false;
         me._observable = SJ.utils.Observable.decorate(me, true);
         me._serverDescriptionHolder = new SJ.iwc.SharedData(serverId);
-        var serverDescription = me.serverDescriptionHolder.get();
+        var serverDescription = me._serverDescriptionHolder.get();
         if (serverDescription) {
             me.updateContract(serverDescription);
         }
