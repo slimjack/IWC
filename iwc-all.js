@@ -608,6 +608,11 @@ SJ.ns = function createNameSpace(namespace) {
             if ((event.key && event.key === me._dataId) || !event.key) {
                 var serializedData = SJ.localStorage.getItem(me._dataId);
                 if (serializedData !== me._serializedData) {
+                    me._serializedData = serializedData;
+                    var data = null;
+                    if (serializedData) {
+                        data = JSON.parse(serializedData);
+                    }
                     me._observable.fire('changed', data);
                 }
             }
@@ -1102,7 +1107,7 @@ SJ.ns = function createNameSpace(namespace) {
         me._isReady = false;
         me._observable = SJ.utils.Observable.decorate(me, true);
         me._serverDescriptionHolder = new SJ.iwc.SharedData(serverId);
-        var serverDescription = me.serverDescriptionHolder.get();
+        var serverDescription = me._serverDescriptionHolder.get();
         if (serverDescription) {
             me.updateContract(serverDescription);
         }
@@ -1164,6 +1169,7 @@ SJ.ns = function createNameSpace(namespace) {
     };
     scope.Client = Client;
 })(SJ.ns('iwc'));
+
 ///#source 1 1 /src/iwc/Server.js
 //https://github.com/slimjack/IWC
 (function (scope) {
