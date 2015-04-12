@@ -70,7 +70,7 @@ SJ.ns = function createNameSpace(namespace) {
                 return 11;
             }
             var myNav = navigator.userAgent.toLowerCase();
-            return (myNav.indexOf('msie') != -1) ? parseInt(myNav.split('msie')[1]) : false;
+            return (myNav.indexOf('msie') !== -1) ? parseInt(myNav.split('msie')[1]) : false;
         },
 
         copy: function (dst, src) {
@@ -252,7 +252,6 @@ SJ.ns = function createNameSpace(namespace) {
     var isIE11 = SJ.isIE() === 11;
     var lastStorageEventKey;
     var lastStorageEventValue;
-    var storageId = SJ.generateGUID();
     var observableOnlyExternal = new SJ.utils.Observable();
     //observable is used only for events from other windows
     var observableAll;
@@ -388,6 +387,7 @@ SJ.ns = function createNameSpace(namespace) {
                 }
             }
         },
+
         setVersion: function (storagePrefix, version) {
             var me = this;
             var currentVersion = me.getItem(storagePrefix);
@@ -403,6 +403,10 @@ SJ.ns = function createNameSpace(namespace) {
                 });
             }
             me.setItem(storagePrefix, version);
+        },
+
+        isFullStorageEventSupported: function () {
+            return SJ.isIE() === 9;
         }
     };
 })(SJ);
@@ -605,7 +609,7 @@ SJ.ns = function createNameSpace(namespace) {
 
         onStorageChanged: function (event) {
             var me = this;
-            if ((event.key && event.key === me._dataId) || !event.key) {
+            if (!event.key || (event.key === me._dataId)) {
                 var serializedData = SJ.localStorage.getItem(me._dataId);
                 if (serializedData !== me._serializedData) {
                     me._serializedData = serializedData;
@@ -628,28 +632,59 @@ SJ.ns = function createNameSpace(namespace) {
     var observableOnlyExternal = new SJ.utils.Observable();
     var observableAll = new SJ.utils.Observable();//for subscribers which listen for all events including genereted from this window
     var storageId = SJ.iwc.getLocalStoragePrefix() + '_EBUS';
-    SJ.localStorage.onChanged(onStorageChanged);
+    var onStorageChanged;
+    var fire;
 
-    function onStorageChanged (event) {
-        if ((event.key === storageId) && event.newValue) {
-            var busEvent = JSON.parse(event.newValue);
-            if (busEvent.senderBusNodeId !== busNodeId) {
-                observableOnlyExternal.fire.apply(window, busEvent.args);
-                observableAll.fire.apply(window, busEvent.args);
+    if (SJ.localStorage.isFullStorageEventSupported()) {
+        onStorageChanged = function(event) {
+            if ((event.key === storageId) && event.newValue) {
+                var busEvent = JSON.parse(event.newValue);
+                if (busEvent.senderBusNodeId !== busNodeId) {
+                    observableOnlyExternal.fire.apply(window, busEvent.args);
+                    observableAll.fire.apply(window, busEvent.args);
+                }
             }
-        }
-    };
-
-    function fire () {
-        var busEvent = {
-            senderBusNodeId: busNodeId,
-            args: Array.prototype.slice.call(arguments, 0)
         };
-        var serializedBusEvent = JSON.stringify(busEvent);
-        SJ.localStorage.setItem(storageId, serializedBusEvent);
-        observableAll.fire.apply(window, busEvent.args);
-    };
 
+        fire = function() {
+            var busEvent = {
+                senderBusNodeId: busNodeId,
+                args: Array.prototype.slice.call(arguments, 0)
+            };
+            var serializedBusEvent = JSON.stringify(busEvent);
+            SJ.localStorage.setItem(storageId, serializedBusEvent);
+            observableAll.fire.apply(window, busEvent.args);
+        };
+    } else {
+        var eventIdDelimiter = '#';
+        var lastEventId;
+        onStorageChanged = function (event) {
+            var serializedBusEvent = SJ.localStorage.getItem(storageId);
+            var eventId = serializedBusEvent.substr(0, serializedBusEvent.indexOf(eventIdDelimiter));
+            if (lastEventId !== eventId) {
+                lastEventId = eventId;
+                var eventData = serializedBusEvent.substr(eventId.length + 1);
+                var busEvent = JSON.parse(eventData);
+                if (busEvent.senderBusNodeId !== busNodeId) {
+                    observableOnlyExternal.fire.apply(window, busEvent.args);
+                    observableAll.fire.apply(window, busEvent.args);
+                }
+            }
+        };
+
+        fire = function () {
+            var busEvent = {
+                senderBusNodeId: busNodeId,
+                args: Array.prototype.slice.call(arguments, 0)
+            };
+            var eventId = SJ.generateGUID();
+            var serializedBusEvent = eventId + eventIdDelimiter  + JSON.stringify(busEvent);
+            SJ.localStorage.setItem(storageId, serializedBusEvent);
+            observableAll.fire.apply(window, busEvent.args);
+        };
+    }
+
+    SJ.localStorage.onChanged(onStorageChanged);
     SJ.copy(scope, {
         on: function (eventName, fn, scope, listenThisWindow) {
             if (listenThisWindow) {

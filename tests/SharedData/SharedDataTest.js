@@ -1,7 +1,7 @@
 ﻿var childWindows = [];
 var numOfChildWindows = 5;
 for (var i = 0; i < numOfChildWindows; i++) {
-    childWindows.push(window.open('SharedData-test-child.html', 'SharedData-test-child' + i));
+    childWindows.push(window.open('SharedData-test-child.html', 'SharedData_test_child' + i));
 }
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
 describe("SharedData.", function () {

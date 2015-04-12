@@ -1,7 +1,7 @@
 ﻿var numOfChildWindows = 5;
 var childWindows = [];
 for (var i = 0; i < numOfChildWindows; i++) {
-    var windowName = 'interlockedCall-test-child' + i;
+    var windowName = 'interlockedCall_test_child' + i;
     childWindows.push(window.open('interlockedCall-test-child.html', windowName));
 }
 var childWindow = null;
@@ -31,11 +31,15 @@ describe("Lock.", function () {
         var testFn = function() {
             if (getNumOfPerformedChildInterlockedCall() > 0) {
                 var startTimeStamp = new Date().getTime();
-                console.log(startTimeStamp);
+                if (window.console) {
+                    console.log(startTimeStamp);
+                }
                 SJ.iwc.Lock.interlockedCall('interlockedCall', function () {
                     var now = new Date().getTime();
                     expect(now - startTimeStamp).toBeGreaterThan(5000);
-                    console.log("lock time " + (now - startTimeStamp));
+                    if (window.console) {
+                        console.log("lock time " + (now - startTimeStamp));
+                    }
                     done();
                 });
             } else {

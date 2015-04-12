@@ -1,11 +1,11 @@
 ﻿var childWindows = [];
-var numOfChanges = 10000;
+var numOfChanges = 5000;
 var numOfChildWindows = 5;
 for(var i = 0; i < numOfChildWindows; i++){
-    childWindows.push(window.open('localStorage-test-child.html', 'localStorage-test-child' + i));
+    childWindows.push(window.open('localStorage-test-child.html', 'localStorage_test_child' + i));
 }
 
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 30000;
+jasmine.DEFAULT_TIMEOUT_INTERVAL = SJ.isIE() === 9 ? 400000 : 20000;
 describe("LocalStorage.", function () {
     beforeEach(function (done) {
         done();
@@ -18,7 +18,7 @@ describe("LocalStorage.", function () {
             i++;
         }
         if (i < numOfChanges) {
-            setTimeout(fillFunc, 10);
+            setTimeout(fillFunc, 20);
         }
     };
     setTimeout(fillFunc, 1000);
@@ -28,7 +28,7 @@ describe("LocalStorage.", function () {
                 expect(childWindow.data.onStorageCounter).toEqual(i);
             });
             done();
-        }, 20000);
+        }, jasmine.DEFAULT_TIMEOUT_INTERVAL - 10000);
     });
     it('Data propagation stability. Num of storage changes: ' + numOfChanges, function (done) {
         childWindows.forEach(function (childWindow) {

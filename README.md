@@ -14,10 +14,10 @@ This library provides functionality for data exchange and synchronization betwee
 Library doesn't use localStorage directly - it is accessed via wrapper **SJ.localStorage**. This wrapper is intended to encapsulate some browser specific issues.
 
 #Supported browsers
-**IWC** doesn't support IE8 and IE9, but it is planed to add IE9 support. Library was tested on IE10, IE11, Chrome (39.0.2171.95 m) and Firefox(34.0.5) 
+**IWC** doesn't support IE8. Library was tested on IE9, IE10, IE11, Chrome (39.0.2171.95 m) and Firefox(34.0.5) 
 
 #Where it can be used
-1. **Connection sharing.** This can be usefull when you need to listen for server events. You may have only one real connection in one of application windows (see [IWC-SignalR](https://github.com/slimjack/IWC-SignalR)).
+1. **Connection sharing.** This can be usefull when you need to listen for server events. It allows to have only one real connection in one of application windows (see [IWC-SignalR](https://github.com/slimjack/IWC-SignalR)).
  This connection can be shared by means of IWC (`EventBus` or `SharedData`) across other windows, so they don't need to have real connection.
  If page which holds the real connection is closed, another one becomes a real connection holder. Just put connection establishing in a lock:
  
@@ -35,7 +35,7 @@ Library doesn't use localStorage directly - it is accessed via wrapper **SJ.loca
     });
     ```
 2. **Content synchronization**. For example, you have a list of items in one window and details are displayed in another window. You can use `EventBus` to notify details window about selection changes.
-3. **Single window**. If you have special window which should be opened in one instance, use `WindowMonitor`:
+3. **Single window**. If you have special window which should be opened in a single instance, use `WindowMonitor`:
 
     ```js
     function openSpecialWindow () {
@@ -145,7 +145,7 @@ Provides an API to broadcast events between windows (tabs). Event bus methods:
 `SJ.iwc.EventBus.on({string}eventName, handlerFn, [scope], [{bool}listenThisWindow])`
 
 ######Parameters:
-- `eventName` - name of the event to which subscribe to.
+- `eventName` - name of the event.
 - `handlerFn` - function which is called when event is raised. All parameters specified for event are passed to `handlerFn` as parameters.
 - `scope(optional)` - is used to set the scope of `handlerFn`. If not specified `window` object is used as a scope.
 - `listenThisWindow(optional)` - if *true*, then `handlerFn` is called even if the event is raised in this window. Otherwise `handlerFn` is called only when event is raised in other windows.
@@ -220,7 +220,7 @@ SJ.iwc.EventBus.un('someevent', myObject.eventHandler, myObject);
 - `parameter1, parameter2, parameter3, ...` - optional parameters which are passed to event handlers as function parameters.
 
 ######Description:
-`fire` allows to raise a specific event wich will be broadcasted to all windows with the same origin.
+`fire` allows to raise a specific event which will be broadcasted to all windows with the same origin.
 
 
 ###WindowMonitor (SJ.iwc.WindowMonitor)
@@ -233,7 +233,7 @@ Tracks the state of windows within the same origin. WindowMonitor methods:
 - `onReady` - sets the handler to be called once the WindowMonitor is initialized.
 - `setFocus` - sets the focus to specified window.
 
-`isWindowOpen` method will work properly only after WindowMonitor is initialized (use `isReady` or `onReady` methods). This happens because WindowMonitor uses interlocked calls which are executed asynchronously.
+`isWindowOpen` method will work properly only after WindowMonitor is initialized (use `isReady` or `onReady` methods). This is because WindowMonitor during initialization uses interlocked calls which are executed asynchronously.
 
 ####getThisWindowId
 `{string} SJ.iwc.WindowMonitor.getThisWindowId()`
@@ -248,14 +248,14 @@ Returns the id of this window. If window has name (`window.name`), then it is us
 Returns *true* if WindowMonitor initialized.
 
 ######Description:
-checks if WindowMonitor is initialized and ready to use.
+Checks if WindowMonitor is initialized and ready to use.
 
 ####onReady
 `SJ.iwc.WindowMonitor.onReady(handlerFn, [scope])`
 
 ######Parameters:
 - `handlerFn` - function which is called after WindowMonitor initialized.
-- `scope(optional)` - is used to set the scope of `handlerFn`. If not specified `window` object is used as a scope.
+- `scope(optional)` - is used to set the scope of `handlerFn`. If not specified, `window` object is used as a scope.
 
 ######Description:
 `onReady` notifies about WindowMonitor initialization. If `onReady` is used when WindowMonitor already initialized, `handlerFn` will be called immediatelly.
@@ -280,10 +280,10 @@ if (SJ.iwc.WindowMonitor.isReady()) {
 `SJ.iwc.WindowMonitor.setFocus([{string}windowId])`
 
 ######Parameters:
-- `windowId(optional)` - the id of the window to focus on. If is not specified focus is set to this window.
+- `windowId(optional)` - the id of the window to focus on. If not specified, focus is set to this window.
 
 ######Description:
-`setFocus` set focus to specified window. To set focus WindowMonitor calls `window.focus()` and blinks window title for some time.
+`setFocus` sets the focus on specified window. To set focus WindowMonitor calls `window.focus()` and blinks window title several times.
 
 ####onWindowsChanged
 `SJ.iwc.WindowMonitor.onWindowsChanged(handlerFn, [scope])`
@@ -294,7 +294,7 @@ if (SJ.iwc.WindowMonitor.isReady()) {
     `handlerFn({array of string}openWindows, {array of string}closedWindows)`
     - `openWindows` - an array of ids of new opened windows.
     - `closedWindows` - an array of ids of closed windows.
-- `scope(optional)` - is used to set the scope of `handlerFn`. If not specified `window` object is used as a scope.
+- `scope(optional)` - is used to set the scope of `handlerFn`. If not specified, `window` object is used as a scope.
 
 ######Description:
 If some window is opened or closed (or even crashed), WindowMonitor notifies its subscribers about that. WindowMonitor allows to handle situations when several windows are closed or opened simultaniously.
@@ -325,23 +325,23 @@ SJ.iwc.WindowMonitor.onWindowsChanged(function (openWindows, closedWindows) {
 - `scope(optional)` - the scope specified in subscription.
 
 ######Description:
-`unsubscribe` allows to unsubscribe from a windows change event. `handlerFn` and  `scope` must be the same as specified in subscription.
+`unsubscribe` allows to unsubscribe from windows change event. `handlerFn` and `scope` must be the same as specified in subscription.
 
 ###SharedData (SJ.iwc.SharedData)
-`SJ.iwc.SharedData` is a type. It allows to create data objects which are shared between windows. All data changes done in one window are replicated to all other windws of the same origin.
+`SJ.iwc.SharedData` is a class. It allows to create data objects which are shared between windows. All data changes done in one window are replicated to all other windows of the same origin.
 
 SharedData members:
 
 - `get` - return the underlying data.
-- `set` - checks if specified window is open.
-- `change` - subscription methods for windows change event.
+- `set` - sets data.
+- `change` - atomic 'read-modify-write' operation.
 - `onChanged, onceChanged, unsubscribe` - subscription methods for data change event.
 
 ####constructor
 `new SJ.iwc.SharedData({string}dataId)`
 
 ######Parameters:
-- `dataId` - the id of the data to be identified in different windows.
+- `dataId` - the id of the shared data. Must be the same in different windows.
 
 ######Description:
 Creates new SharedData object which is bound to the data object identified by `dataId`.
@@ -406,10 +406,10 @@ sharedData.change(function (currentDataValue) {
 
     `handlerFn({object}currentDataValue)`
     - `currentDataValue` - current value of the bound data object.
-- `scope(optional)` - is used to set the scope of `handlerFn`. If not specified `window` object is used as a scope.
+- `scope(optional)` - is used to set the scope of `handlerFn`. If not specified, `window` object is used as a scope.
 
 ######Description:
-If shared data is changed (in this window or in others), subscripbers are notified about that. 
+If shared data is changed (in this window or in others), subscribers are notified about that. 
 
 ####onceChanged
 `onceChanged(handlerFn, [scope])`
@@ -428,12 +428,12 @@ If shared data is changed (in this window or in others), subscripbers are notifi
 `unsubscribe` allows to unsubscribe from data change event. `handlerFn` and  `scope` must be the same as specified in subscription.
 
 ###SJ.localStorage
-As it is noted above **IWC** doesn't use localStorage directly - it is accessed via wrapper `SJ.localStorage`. This wrapper is intended to encapsulate some browser specific issues like event subscription, event data bugs. Also it provies some additional usefull functions.
+As it is noted above **IWC** doesn't use localStorage directly - it is accessed via wrapper `SJ.localStorage`. This wrapper is intended to encapsulate some browser specific issues like event subscription, event data bugs. Also it provides some additional usefull functions.
 
 SJ.localStorage members:
 
 - `getItem, setItem, removeItem` - are the same as in original localStorage.
-- `forEach` - iterates through all items in localStorage.
+- `forEach` - iterates through all the items in localStorage.
 - `setVersion` - allows to clear obsolete items in localStorage.
 - `onChanged, onceChanged, unsubscribe` - subscription methods for storage change event.
 
@@ -448,10 +448,10 @@ SJ.localStorage members:
     - `value` - item value.
 
     ######Return value:
-If `fn` returns *false* iterating is stopped.
+If `fn` returns *false*, iterating is stopped.
 
 ######Description:
-Iterates through all items in localStorage.
+Iterates through all the items in localStorage.
 
 ####onChanged
 `SJ.localStorage.onChanged(handlerFn, [scope], [{bool}listenThisWindow])`
@@ -460,11 +460,11 @@ Iterates through all items in localStorage.
 - `handlerFn` - function which is called when local storage is changed. Handler function sigature:
     `handlerFn({object}event)`
     - `event` - 'storage' event object according to original localStorage specification.
-- `scope(optional)` - is used to set the scope of `handlerFn`. If not specified `window` object is used as a scope.
-- `listenThisWindow(optional)` - if *true*, then `handlerFn` is called even if storage change is done in this window. Otherwise `handlerFn` is called only when localStorage is changed in other windows.
+- `scope(optional)` - is used to set the scope of `handlerFn`. If not specified, `window` object is used as a scope.
+- `listenThisWindow(optional)` - if *true*, then `handlerFn` is called even if storage is changed in this window. Otherwise `handlerFn` is called only when localStorage is changed in other windows.
 
 ######Description:
-If store is changed subscripbers are notified about that. 
+If store is changed subscribers are notified about that. 
 
 ####onceChanged
 `SJ.localStorage.onceChanged(handlerFn, [scope], [{bool}listenThisWindow])`
@@ -493,10 +493,10 @@ If store is changed subscripbers are notified about that.
 ######Description:
 localStorage stores the data to disk, so it's not cleared even after PC reboot. 
 localStorage is often used to store serialized objects. 
-If object structure is changed it may cause unpredictable behaviour of your application because local storage may have serialized object with obsolete structure.
+If object structure is changed, it may cause unpredictable behaviour of your application because local storage may have serialized object with obsolete structure.
 To avoid such situations it is recommended to use common key prefix for localStorage items which hold such structure critical objects.
 
-`setVersion` is intended o help with prefix version tracking.
+`setVersion` is intended to help with prefix version tracking.
 If specified prefix version differs from current version, all items with specified prefix will be removed from localStorage.
 
 ###Application isolation

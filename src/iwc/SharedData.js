@@ -64,7 +64,7 @@
 
         onStorageChanged: function (event) {
             var me = this;
-            if ((event.key && event.key === me._dataId) || !event.key) {
+            if (!event.key || (event.key === me._dataId)) {
                 var serializedData = SJ.localStorage.getItem(me._dataId);
                 if (serializedData !== me._serializedData) {
                     me._serializedData = serializedData;

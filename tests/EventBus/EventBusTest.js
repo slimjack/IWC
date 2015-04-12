@@ -1,10 +1,10 @@
 ﻿var numOfChildWindows = 5;
 var childWindows = [];
 for(var i = 0; i < numOfChildWindows; i++){
-    childWindows.push(window.open('EventBus-test-child.html', 'EventBus-test-child' + i));
+    childWindows.push(window.open('EventBus-test-child.html', 'EventBus_test_child' + i));
 }
 
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 20000;
+jasmine.DEFAULT_TIMEOUT_INTERVAL = SJ.isIE() === 9 ? 200000 : 20000;
 describe("EventBus.", function () {
     beforeEach(function (done) {
         done();
@@ -29,11 +29,11 @@ describe("EventBus.", function () {
         }
     };
     setTimeout(fillFunc, 1000);
-    it('Events may be handled or not handled by event sender', function (done) {
+    it('Events are handled by event sender', function (done) {
         setTimeout(function() {
             expect(thisWindowCounter).toEqual(i);
             done();
-        }, 10000);
+        }, jasmine.DEFAULT_TIMEOUT_INTERVAL - 10000);
     });
     it('Event propagation stability. Num of events: ' + numOfEvents, function (done) {
         childWindows.forEach(function (childWindow) {

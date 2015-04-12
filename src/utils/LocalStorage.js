@@ -13,7 +13,6 @@
     var isIE11 = SJ.isIE() === 11;
     var lastStorageEventKey;
     var lastStorageEventValue;
-    var storageId = SJ.generateGUID();
     var observableOnlyExternal = new SJ.utils.Observable();
     //observable is used only for events from other windows
     var observableAll;
@@ -149,6 +148,7 @@
                 }
             }
         },
+
         setVersion: function (storagePrefix, version) {
             var me = this;
             var currentVersion = me.getItem(storagePrefix);
@@ -164,6 +164,10 @@
                 });
             }
             me.setItem(storagePrefix, version);
+        },
+
+        isFullStorageEventSupported: function () {
+            return SJ.isIE() === 9;
         }
     };
 })(SJ);

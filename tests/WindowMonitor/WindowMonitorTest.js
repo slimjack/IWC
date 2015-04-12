@@ -5,7 +5,7 @@ SJ.iwc.WindowMonitor.onWindowsChanged(function (newWindows, closedWindows) {
     numOfOpenedWindows += newWindows.length - closedWindows.length;
 });
 for (var i = 0; i < numOfChildWindows; i++) {
-    var windowName = 'WindowMonitor-test-child' + i;
+    var windowName = 'WindowMonitor_test_child' + i;
     if (SJ.iwc.WindowMonitor.isWindowOpen(windowName)) {
         numOfOpenedWindows++;
     }

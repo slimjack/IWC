@@ -51,7 +51,7 @@
                 return 11;
             }
             var myNav = navigator.userAgent.toLowerCase();
-            return (myNav.indexOf('msie') != -1) ? parseInt(myNav.split('msie')[1]) : false;
+            return (myNav.indexOf('msie') !== -1) ? parseInt(myNav.split('msie')[1]) : false;
         },
 
         copy: function (dst, src) {
