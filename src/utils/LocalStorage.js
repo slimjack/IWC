@@ -165,10 +165,6 @@
                 });
             }
             me.setItem(storagePrefix, version);
-        },
-
-        isFullStorageEventSupported: function () {
-            return SJ.isIE() !== 9;
         }
     };
 })(SJ);

@@ -112,7 +112,7 @@
                 fire();
             }
         } else {
-            fire();//For IE8 and IE9. IE8 and IE9 don't provide any details about storage changes
+            fire();//For IE8. IE8 doesn't provide any details about storage changes
         }
     };
 

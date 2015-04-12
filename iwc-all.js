@@ -406,10 +406,6 @@ SJ.ns = function createNameSpace(namespace) {
                 });
             }
             me.setItem(storagePrefix, version);
-        },
-
-        isFullStorageEventSupported: function () {
-            return SJ.isIE() !== 9;
         }
     };
 })(SJ);
@@ -420,7 +416,7 @@ SJ.ns = function createNameSpace(namespace) {
     scope.getLocalStoragePrefix = function () {
         return localStoragePerfix;
     };
-    scope.$version = '0.1.2';
+    scope.$version = '0.1.3';
     SJ.localStorage.setVersion(localStoragePerfix, scope.$version);
 })(SJ.ns('iwc'));
 ///#source 1 1 /src/iwc/InterlockedCall.js
@@ -538,7 +534,7 @@ SJ.ns = function createNameSpace(namespace) {
                 fire();
             }
         } else {
-            fire();//For IE8 and IE9. IE8 and IE9 don't provide any details about storage changes
+            fire();//For IE8. IE8 doesn't provide any details about storage changes
         }
     };
 
@@ -635,57 +631,26 @@ SJ.ns = function createNameSpace(namespace) {
     var observableOnlyExternal = new SJ.utils.Observable();
     var observableAll = new SJ.utils.Observable();//for subscribers which listen for all events including genereted from this window
     var storageId = SJ.iwc.getLocalStoragePrefix() + '_EBUS';
-    var onStorageChanged;
-    var fire;
 
-    if (SJ.localStorage.isFullStorageEventSupported()) {
-        onStorageChanged = function(event) {
-            if ((event.key === storageId) && event.newValue) {
-                var busEvent = JSON.parse(event.newValue);
-                if (busEvent.senderBusNodeId !== busNodeId) {
-                    observableOnlyExternal.fire.apply(window, busEvent.args);
-                    observableAll.fire.apply(window, busEvent.args);
-                }
+    function onStorageChanged (event) {
+        if ((event.key === storageId) && event.newValue) {
+            var busEvent = JSON.parse(event.newValue);
+            if (busEvent.senderBusNodeId !== busNodeId) {
+                observableOnlyExternal.fire.apply(window, busEvent.args);
+                observableAll.fire.apply(window, busEvent.args);
             }
-        };
+        }
+    };
 
-        fire = function() {
-            var busEvent = {
-                senderBusNodeId: busNodeId,
-                args: Array.prototype.slice.call(arguments, 0)
-            };
-            var serializedBusEvent = JSON.stringify(busEvent);
-            SJ.localStorage.setItem(storageId, serializedBusEvent);
-            observableAll.fire.apply(window, busEvent.args);
+    function fire () {
+        var busEvent = {
+            senderBusNodeId: busNodeId,
+            args: Array.prototype.slice.call(arguments, 0)
         };
-    } else {
-        var eventIdDelimiter = '#';
-        var lastEventId;
-        onStorageChanged = function (event) {
-            var serializedBusEvent = SJ.localStorage.getItem(storageId);
-            var eventId = serializedBusEvent.substr(0, serializedBusEvent.indexOf(eventIdDelimiter));
-            if (lastEventId !== eventId) {
-                lastEventId = eventId;
-                var eventData = serializedBusEvent.substr(eventId.length + 1);
-                var busEvent = JSON.parse(eventData);
-                if (busEvent.senderBusNodeId !== busNodeId) {
-                    observableOnlyExternal.fire.apply(window, busEvent.args);
-                    observableAll.fire.apply(window, busEvent.args);
-                }
-            }
-        };
-
-        fire = function () {
-            var busEvent = {
-                senderBusNodeId: busNodeId,
-                args: Array.prototype.slice.call(arguments, 0)
-            };
-            var eventId = SJ.generateGUID();
-            var serializedBusEvent = eventId + eventIdDelimiter  + JSON.stringify(busEvent);
-            SJ.localStorage.setItem(storageId, serializedBusEvent);
-            observableAll.fire.apply(window, busEvent.args);
-        };
-    }
+        var serializedBusEvent = JSON.stringify(busEvent);
+        SJ.localStorage.setItem(storageId, serializedBusEvent);
+        observableAll.fire.apply(window, busEvent.args);
+    };
 
     SJ.localStorage.onChanged(onStorageChanged);
     SJ.copy(scope, {
@@ -763,7 +728,7 @@ SJ.ns = function createNameSpace(namespace) {
                 updateDataFromStorage();
             }
         } else {
-            updateDataFromStorage();//For IE8 and IE9. IE8 and IE9 don't provide any details about storage changes
+            updateDataFromStorage();//For IE8. IE8 doesn't provide any details about storage changes
         }
     };
 
@@ -1041,7 +1006,7 @@ SJ.ns = function createNameSpace(namespace) {
                 fire();
             }
         } else {
-            fire();//For IE8 and IE9. IE8 and IE9 don't provide any details about storage changes
+            fire();//For IE8. IE8 doesn't provide any details about storage changes
         }
     };
 
