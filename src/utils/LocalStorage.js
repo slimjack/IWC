@@ -126,6 +126,7 @@
             };
             observableAll.fire('storage', event);
         },
+
         forEach: isIE11 ? function (fn) {
             for (var i = 0; i < originalLocalStorage.length; i++) {
                 var itemKey = originalLocalStorage.key(i);

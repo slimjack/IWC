@@ -4,6 +4,6 @@
     scope.getLocalStoragePrefix = function () {
         return localStoragePerfix;
     };
-    scope.$version = '0.1.1';
+    scope.$version = '0.1.2';
     SJ.localStorage.setVersion(localStoragePerfix, scope.$version);
 })(SJ.ns('iwc'));

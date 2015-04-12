@@ -1,16 +1,16 @@
 ﻿//https://github.com/slimjack/IWC
 (function (scope) {
-    var Server = function(serverId, serverConfig, privateConfig) {
+    var Server = function(serverId, config) {
         var me = this;
         me._serverId = serverId;
         me._serverDescriptionHolder = new SJ.iwc.SharedData(me._serverId);
-        SJ.copy(me, serverConfig);
-        SJ.copy(me, privateConfig);
+        SJ.copy(me, config.exposed);
+        var exposedConfig = config.exposed;
+        delete config.exposed;
+        SJ.copy(me, config);
         SJ.lock(serverId, function () {
-            if (me.initServer) {
-                me.initServer();
-            }
-            me.updateServerDescription(serverConfig);
+            me.onInit();
+            me.updateServerDescription(exposedConfig);
             SJ.iwc.EventBus.on('servercall_' + me._serverId, me.onServerCall, me);
         });
     };
@@ -18,11 +18,13 @@
     Server.prototype = {
         constructor: Server,
 
+        onInit: SJ.emptyFn,
+
         //region Private
-        updateServerDescription: function (serverConfig) {
+        updateServerDescription: function (exposedConfig) {
             var me = this;
             var serverMethods = [];
-            SJ.Object.each(serverConfig, function (methodName) {
+            SJ.Object.each(exposedConfig, function (methodName) {
                 serverMethods.push(methodName);
             });
             me._serverDescriptionHolder.set(serverMethods);
@@ -40,7 +42,7 @@
                 args.unshift(callback);
             } else {
                 //empty callback
-                args.unshift(function() {});
+                args.unshift(SJ.emptyFn);
             }
             me[eventData.methodName].apply(me, args);
         }

@@ -63,6 +63,8 @@
             return dst;
         },
 
+        emptyFn: function() {},
+
         isEmpty: function (value) {
             return (value == null) || value === '' || (SJ.isArray(value) && value.length === 0);
         },

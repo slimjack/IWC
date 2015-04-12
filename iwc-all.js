@@ -82,6 +82,8 @@ SJ.ns = function createNameSpace(namespace) {
             return dst;
         },
 
+        emptyFn: function() {},
+
         isEmpty: function (value) {
             return (value == null) || value === '' || (SJ.isArray(value) && value.length === 0);
         },
@@ -365,6 +367,7 @@ SJ.ns = function createNameSpace(namespace) {
             };
             observableAll.fire('storage', event);
         },
+
         forEach: isIE11 ? function (fn) {
             for (var i = 0; i < originalLocalStorage.length; i++) {
                 var itemKey = originalLocalStorage.key(i);
@@ -417,7 +420,7 @@ SJ.ns = function createNameSpace(namespace) {
     scope.getLocalStoragePrefix = function () {
         return localStoragePerfix;
     };
-    scope.$version = '0.1.1';
+    scope.$version = '0.1.2';
     SJ.localStorage.setVersion(localStoragePerfix, scope.$version);
 })(SJ.ns('iwc'));
 ///#source 1 1 /src/iwc/InterlockedCall.js
@@ -1136,7 +1139,7 @@ SJ.ns = function createNameSpace(namespace) {
 ///#source 1 1 /src/iwc/Client.js
 //https://github.com/slimjack/IWC
 (function (scope) {
-    var Client = function(serverId) {
+    var Client = function(serverId, readyCallback) {
         var me = this;
         me._serverId = serverId;
         me._isReady = false;
@@ -1149,6 +1152,9 @@ SJ.ns = function createNameSpace(namespace) {
         me._serverDescriptionHolder.onChanged(function (newServerDescription) {
             me.updateContract(newServerDescription);
         });
+        if (readyCallback) {
+            me.onReady(readyCallback);
+        }
     };
 
     Client.prototype = {
@@ -1208,17 +1214,17 @@ SJ.ns = function createNameSpace(namespace) {
 ///#source 1 1 /src/iwc/Server.js
 //https://github.com/slimjack/IWC
 (function (scope) {
-    var Server = function(serverId, serverConfig, privateConfig) {
+    var Server = function(serverId, config) {
         var me = this;
         me._serverId = serverId;
         me._serverDescriptionHolder = new SJ.iwc.SharedData(me._serverId);
-        SJ.copy(me, serverConfig);
-        SJ.copy(me, privateConfig);
+        SJ.copy(me, config.exposed);
+        var exposedConfig = config.exposed;
+        delete config.exposed;
+        SJ.copy(me, config);
         SJ.lock(serverId, function () {
-            if (me.initServer) {
-                me.initServer();
-            }
-            me.updateServerDescription(serverConfig);
+            me.onInit();
+            me.updateServerDescription(exposedConfig);
             SJ.iwc.EventBus.on('servercall_' + me._serverId, me.onServerCall, me);
         });
     };
@@ -1226,11 +1232,13 @@ SJ.ns = function createNameSpace(namespace) {
     Server.prototype = {
         constructor: Server,
 
+        onInit: SJ.emptyFn,
+
         //region Private
-        updateServerDescription: function (serverConfig) {
+        updateServerDescription: function (exposedConfig) {
             var me = this;
             var serverMethods = [];
-            SJ.Object.each(serverConfig, function (methodName) {
+            SJ.Object.each(exposedConfig, function (methodName) {
                 serverMethods.push(methodName);
             });
             me._serverDescriptionHolder.set(serverMethods);
@@ -1248,7 +1256,7 @@ SJ.ns = function createNameSpace(namespace) {
                 args.unshift(callback);
             } else {
                 //empty callback
-                args.unshift(function() {});
+                args.unshift(SJ.emptyFn);
             }
             me[eventData.methodName].apply(me, args);
         }

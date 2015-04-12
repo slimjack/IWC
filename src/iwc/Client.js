@@ -1,6 +1,6 @@
 ﻿//https://github.com/slimjack/IWC
 (function (scope) {
-    var Client = function(serverId) {
+    var Client = function(serverId, readyCallback) {
         var me = this;
         me._serverId = serverId;
         me._isReady = false;
@@ -13,6 +13,9 @@
         me._serverDescriptionHolder.onChanged(function (newServerDescription) {
             me.updateContract(newServerDescription);
         });
+        if (readyCallback) {
+            me.onReady(readyCallback);
+        }
     };
 
     Client.prototype = {
