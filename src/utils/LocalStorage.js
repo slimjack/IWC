@@ -168,7 +168,7 @@
         },
 
         isFullStorageEventSupported: function () {
-            return SJ.isIE() === 9;
+            return SJ.isIE() !== 9;
         }
     };
 })(SJ);
