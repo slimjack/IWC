@@ -57,9 +57,8 @@
         //region Private
         writeToStorage: function (data) {
             var me = this;
-            me._serializedData = data !== null ? JSON.stringify(data) : '';
-            SJ.localStorage.setItem(me._dataId, me._serializedData);
-            me._observable.fire('changed', data);
+            var serializedData = data !== null ? JSON.stringify(data) : '';
+            SJ.localStorage.setItem(me._dataId, serializedData);
         },
 
         onStorageChanged: function (event) {

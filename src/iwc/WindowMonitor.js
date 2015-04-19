@@ -162,6 +162,16 @@
     SJ.copy(scope, {
         isWindowOpen: isWindowOpen,
 
+        getOpenWindowIds: function () {
+            var result = [];
+            for (var windowId in openWindows) {
+                if (openWindows.hasOwnProperty(windowId)) {
+                    result.push(windowId);
+                }
+            }
+            return result;
+        },
+
         setFocus: function (windowId) {
             if (SJ.isUndefined(windowId)) {
                 onWindowFocusRequest(thisWindowId);
