@@ -15,7 +15,7 @@
             var eventListeners = listeners[eventName];
             if (eventListeners) {
                 for (var i = 0; i < eventListeners.length; i++) {
-                    if (eventListeners[i].listenerFn === listenerFn && eventListeners[i].scope === scope) {
+                    if (eventListeners[i].fn === listenerFn && eventListeners[i].scope === scope) {
                         return eventListeners[i];
                     }
                 }
