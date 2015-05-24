@@ -266,6 +266,8 @@ SJ.ns = function createNameSpace(namespace) {
         //if browser works according localStorage specification, this window events will be fired from this localStorage wrapper
         observableAll = new SJ.utils.Observable();
     };
+
+
     var onStorage = isIE11 ?
         function (event) {
             event = event || window.event;
@@ -394,7 +396,7 @@ SJ.ns = function createNameSpace(namespace) {
         setVersion: function (storagePrefix, version) {
             var me = this;
             var currentVersion = me.getItem(storagePrefix);
-            if (currentVersion && (currentVersion !== version)) {
+            if (currentVersion !== version) {
                 var itemsToRemove = [];
                 me.forEach(function (key) {
                     if (key.substr(0, storagePrefix.length) === storagePrefix) {
@@ -404,8 +406,8 @@ SJ.ns = function createNameSpace(namespace) {
                 itemsToRemove.forEach(function (key) {
                     me.removeItem(key);
                 });
+                me.setItem(storagePrefix, version);
             }
-            me.setItem(storagePrefix, version);
         }
     };
 })(SJ);
@@ -856,7 +858,7 @@ SJ.ns = function createNameSpace(namespace) {
         },
 
         setFocus: function (windowId) {
-            if (SJ.isUndefined(windowId)) {
+            if (windowId) {
                 onWindowFocusRequest(thisWindowId);
             } else {
                 SJ.iwc.EventBus.fire('windowfocusrequest', windowId);

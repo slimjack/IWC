@@ -173,7 +173,7 @@
         },
 
         setFocus: function (windowId) {
-            if (SJ.isUndefined(windowId)) {
+            if (windowId) {
                 onWindowFocusRequest(thisWindowId);
             } else {
                 SJ.iwc.EventBus.fire('windowfocusrequest', windowId);
