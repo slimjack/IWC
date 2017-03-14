@@ -469,7 +469,7 @@ If store is changed subscribers are notified about that.
 #### onceChanged
 `SJ.localStorage.onceChanged(handlerFn, [scope], [{bool}listenThisWindow])`
 
-######Description:
+###### Description:
 `onceChanged` allows to subscribe on storage change event and to handle it only once. So, once event is handled, handler will be automatically unsubscribed.
 
 #### unsubscribe
