@@ -124,33 +124,38 @@
     };
 
     function clearJunkLocks (callback) {
-        var itemsToRemove = [];
         SJ.iwc.WindowMonitor.onReady(function () {
             SJ.localStorage.forEach(function (itemKey, itemValue) {
                 if (itemValue && (itemKey.substr(0, lockIdPrefix.length) === lockIdPrefix)) {
-                    var lockInfo = JSON.parse(itemValue);
-                    if (!lockInfo || !lockInfo.timestamp || !lockInfo.ownerWindowId) {//junk lock info
-                        itemsToRemove.push(itemKey);
-                        return;
-                    }
-                    var lockBelongsToThisWindow = lockInfo.ownerWindowId === SJ.iwc.WindowMonitor.getThisWindowId();
-                    var lockBelongsToClosedWindow = !SJ.iwc.WindowMonitor.isWindowOpen(lockInfo.ownerWindowId);
                     var lockId = itemKey.substr(lockIdPrefix.length);
-                    if (lockBelongsToClosedWindow || (lockBelongsToThisWindow && (findLock(lockId) === -1))) {//junk lock
-                        itemsToRemove.push(itemKey);
+                    if (isJunkLock(lockId, itemValue)) {
+                        SJ.iwc.Lock.interlockedCall(lockId, function () {
+                            var serializedLock = SJ.localStorage.getItem(itemKey);
+                            if (serializedLock && isJunkLock(lockId, serializedLock)) {
+                                SJ.localStorage.removeItem(itemKey);
+                                fire();
+                            }
+                        });
                     }
                 }
             });
-            if (itemsToRemove.length) {
-                for (var i = 0; i < itemsToRemove.length; i++) {
-                    SJ.localStorage.removeItem(itemsToRemove[i]);
-                }
-                fire();
-            }
             if (callback) {
                 callback();
             }
         });
+    };
+
+    function isJunkLock(lockId, serializedLock) {
+        var lockInfo = JSON.parse(serializedLock);
+        if (!lockInfo || !lockInfo.timestamp || !lockInfo.ownerWindowId) {//junk lock info
+            return true;
+        }
+        var lockBelongsToThisWindow = lockInfo.ownerWindowId === SJ.iwc.WindowMonitor.getThisWindowId();
+        var lockBelongsToClosedWindow = !SJ.iwc.WindowMonitor.isWindowOpen(lockInfo.ownerWindowId);
+        if (lockBelongsToClosedWindow || (lockBelongsToThisWindow && (findLock(lockId) === -1))) {//junk lock
+            return true;
+        }
+        return false;
     };
 
     function releaseAllLocks() {

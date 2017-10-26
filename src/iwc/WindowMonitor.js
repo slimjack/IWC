@@ -115,10 +115,10 @@
                 closedWindows.push(windowId);
             }
         }
+        openWindows = newOpenWindows;
         if (newWindows.length || closedWindows.length) {
             onWindowsChanged(newWindows, closedWindows);
         }
-        openWindows = newOpenWindows;
     };
 
     function onWindowsChanged(newWindows, closedWindows) {
