@@ -21,7 +21,7 @@
         observable.fire('storagechanged');
     };
 
-    SJ.windowOn(window, 'unload', onWindowUnload);
+    SJ.windowOn('unload', onWindowUnload);
     clearJunkLocks(function () {
         SJ.iwc.WindowMonitor.onWindowsChanged(function (newWindows, removedWindows) {
             if (removedWindows.length) {
