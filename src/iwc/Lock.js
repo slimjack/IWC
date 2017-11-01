@@ -152,10 +152,7 @@
         }
         var lockBelongsToThisWindow = lockInfo.ownerWindowId === SJ.iwc.WindowMonitor.getThisWindowId();
         var lockBelongsToClosedWindow = !SJ.iwc.WindowMonitor.isWindowOpen(lockInfo.ownerWindowId);
-        if (lockBelongsToClosedWindow || (lockBelongsToThisWindow && (findLock(lockId) === -1))) {//junk lock
-            return true;
-        }
-        return false;
+        return lockBelongsToClosedWindow || (lockBelongsToThisWindow && (findLock(lockId) === -1));
     };
 
     function releaseAllLocks() {
