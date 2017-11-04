@@ -1,4 +1,3 @@
-﻿///#source 1 1 /src/sj.js
 //https://github.com/slimjack/IWC
 var SJ = SJ || {};
 SJ.ns = function createNameSpace(namespace) {
@@ -16,7 +15,6 @@ SJ.ns = function createNameSpace(namespace) {
     }
     return parent;
 };
-///#source 1 1 /src/utils/BasicUtils.js
 //https://github.com/slimjack/IWC
 (function (scope) {
     var fixedHandlers = {};
@@ -129,7 +127,6 @@ SJ.ns = function createNameSpace(namespace) {
     basicUtils.copy(scope, basicUtils);
 })(SJ);
 
-///#source 1 1 /src/utils/Object.js
 //https://github.com/slimjack/IWC
 (function (scope) {
     var ObjectHelper = {
@@ -146,7 +143,6 @@ SJ.ns = function createNameSpace(namespace) {
     SJ.copy(scope, ObjectHelper);
 })(SJ.ns('Object'));
 
-///#source 1 1 /src/utils/Observable.js
 //https://github.com/slimjack/IWC
 (function (scope) {
     function decorate(target) {
@@ -238,7 +234,6 @@ SJ.ns = function createNameSpace(namespace) {
     scope.Observable = Observable;
 })(SJ.ns('utils'));
 
-///#source 1 1 /src/utils/LocalStorage.js
 //https://github.com/slimjack/IWC
 (function (scope) {
     //LocalStorage wrapper is used to abstract from some issues related to different browsers
@@ -411,7 +406,6 @@ SJ.ns = function createNameSpace(namespace) {
         }
     };
 })(SJ);
-///#source 1 1 /src/iwc/iwc.js
 //https://github.com/slimjack/IWC
 (function (scope) {
     var localStoragePerfix = 'IWC_' + SJ.appName;
@@ -421,7 +415,6 @@ SJ.ns = function createNameSpace(namespace) {
     scope.$version = '0.1.3';
     SJ.localStorage.setVersion(localStoragePerfix, scope.$version);
 })(SJ.ns('iwc'));
-///#source 1 1 /src/iwc/InterlockedCall.js
 //https://github.com/slimjack/IWC
 (function (scope) {
     var lockIdPrefix = SJ.iwc.getLocalStoragePrefix() + '_TLOCK_';
@@ -543,7 +536,6 @@ SJ.ns = function createNameSpace(namespace) {
     scope.interlockedCall = interlockedCall;
     SJ.interlockedCall = interlockedCall;
 })(SJ.ns('iwc.Lock'));
-///#source 1 1 /src/iwc/SharedData.js
 //https://github.com/slimjack/IWC
 (function (scope) {
 
@@ -625,7 +617,6 @@ SJ.ns = function createNameSpace(namespace) {
     };
     scope.SharedData = SharedData;
 })(SJ.ns('iwc'));
-///#source 1 1 /src/iwc/EventBus.js
 //https://github.com/slimjack/IWC
 (function (scope) {
     var busNodeId = SJ.generateGUID();
@@ -682,7 +673,6 @@ SJ.ns = function createNameSpace(namespace) {
         fire: fire
     });
 })(SJ.ns('iwc.EventBus'));
-///#source 1 1 /src/iwc/WindowMonitor.js
 //https://github.com/slimjack/IWC
 (function (scope) {
     var windowRecordLifeTime = 5000;
@@ -800,10 +790,10 @@ SJ.ns = function createNameSpace(namespace) {
                 closedWindows.push(windowId);
             }
         }
+        openWindows = newOpenWindows;
         if (newWindows.length || closedWindows.length) {
             onWindowsChanged(newWindows, closedWindows);
         }
-        openWindows = newOpenWindows;
     };
 
     function onWindowsChanged(newWindows, closedWindows) {
@@ -895,7 +885,6 @@ SJ.ns = function createNameSpace(namespace) {
     });
 })(SJ.ns('iwc.WindowMonitor'));
 
-///#source 1 1 /src/iwc/Lock.js
 //https://github.com/slimjack/IWC
 (function (scope) {
     var lockIdPrefix = SJ.iwc.getLocalStoragePrefix() + '_LOCK_';
@@ -919,7 +908,7 @@ SJ.ns = function createNameSpace(namespace) {
         observable.fire('storagechanged');
     };
 
-    SJ.windowOn(window, 'unload', onWindowUnload);
+    SJ.windowOn('unload', onWindowUnload);
     clearJunkLocks(function () {
         SJ.iwc.WindowMonitor.onWindowsChanged(function (newWindows, removedWindows) {
             if (removedWindows.length) {
@@ -1022,33 +1011,35 @@ SJ.ns = function createNameSpace(namespace) {
     };
 
     function clearJunkLocks (callback) {
-        var itemsToRemove = [];
         SJ.iwc.WindowMonitor.onReady(function () {
             SJ.localStorage.forEach(function (itemKey, itemValue) {
                 if (itemValue && (itemKey.substr(0, lockIdPrefix.length) === lockIdPrefix)) {
-                    var lockInfo = JSON.parse(itemValue);
-                    if (!lockInfo || !lockInfo.timestamp || !lockInfo.ownerWindowId) {//junk lock info
-                        itemsToRemove.push(itemKey);
-                        return;
-                    }
-                    var lockBelongsToThisWindow = lockInfo.ownerWindowId === SJ.iwc.WindowMonitor.getThisWindowId();
-                    var lockBelongsToClosedWindow = !SJ.iwc.WindowMonitor.isWindowOpen(lockInfo.ownerWindowId);
                     var lockId = itemKey.substr(lockIdPrefix.length);
-                    if (lockBelongsToClosedWindow || (lockBelongsToThisWindow && (findLock(lockId) === -1))) {//junk lock
-                        itemsToRemove.push(itemKey);
+                    if (isJunkLock(lockId, itemValue)) {
+                        SJ.iwc.Lock.interlockedCall(lockId, function () {
+                            var serializedLock = SJ.localStorage.getItem(itemKey);
+                            if (serializedLock && isJunkLock(lockId, serializedLock)) {
+                                SJ.localStorage.removeItem(itemKey);
+                                fire();
+                            }
+                        });
                     }
                 }
             });
-            if (itemsToRemove.length) {
-                for (var i = 0; i < itemsToRemove.length; i++) {
-                    SJ.localStorage.removeItem(itemsToRemove[i]);
-                }
-                fire();
-            }
             if (callback) {
                 callback();
             }
         });
+    };
+
+    function isJunkLock(lockId, serializedLock) {
+        var lockInfo = JSON.parse(serializedLock);
+        if (!lockInfo || !lockInfo.timestamp || !lockInfo.ownerWindowId) {//junk lock info
+            return true;
+        }
+        var lockBelongsToThisWindow = lockInfo.ownerWindowId === SJ.iwc.WindowMonitor.getThisWindowId();
+        var lockBelongsToClosedWindow = !SJ.iwc.WindowMonitor.isWindowOpen(lockInfo.ownerWindowId);
+        return lockBelongsToClosedWindow || (lockBelongsToThisWindow && (findLock(lockId) === -1));
     };
 
     function releaseAllLocks() {
@@ -1112,7 +1103,7 @@ SJ.ns = function createNameSpace(namespace) {
     scope.capture = captureLock;
     SJ.lock = captureLock;
 })(SJ.ns('iwc.Lock'));
-///#source 1 1 /src/iwc/Client.js
+
 //https://github.com/slimjack/IWC
 (function (scope) {
     var Client = function(serverId, readyCallback) {
@@ -1187,7 +1178,6 @@ SJ.ns = function createNameSpace(namespace) {
     scope.Client = Client;
 })(SJ.ns('iwc'));
 
-///#source 1 1 /src/iwc/Server.js
 //https://github.com/slimjack/IWC
 (function (scope) {
     var Server = function(serverId, config) {
