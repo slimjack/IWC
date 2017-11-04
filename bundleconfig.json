@@ -1,0 +1,25 @@
+[
+    {
+        "outputFileName": "iwc-all.js",
+        "inputFiles": [
+            "src/sj.js",
+            "src/utils/BasicUtils.js",
+            "src/utils/Error.js",
+            "src/utils/Array.js",
+            "src/utils/Object.js",
+            "src/utils/Observable.js",
+            "src/utils/LocalStorage.js",
+            "src/iwc/iwc.js",
+            "src/iwc/InterlockedCall.js",
+            "src/iwc/SharedData.js",
+            "src/iwc/EventBus.js",
+            "src/iwc/WindowMonitor.js",
+            "src/iwc/Lock.js",
+            "src/iwc/Client.js",
+            "src/iwc/Server.js"
+        ],
+        "minify": {
+            "enabled": true
+        }
+    }
+]
