@@ -379,13 +379,13 @@ Sets new value for bound data object.
 ###### Example:
 ```js
 //It is supposed that this example code is executed for the first time for this origin
-var shredData = new SJ.iwc.SharedData('sharedDataId');
+var sharedData = new SJ.iwc.SharedData('sharedDataId');
 sharedData.set({
     dataField: 'fieldValue'
 });
 
 //In another window
-var shredData = new SJ.iwc.SharedData('sharedDataId');
+var sharedData = new SJ.iwc.SharedData('sharedDataId');
 sharedData.change(function (currentDataValue) {
     if (currentDataValue) {//may be null and may be an object { dataField: 'fieldValue' }
         console.log(currentDataValue.dataField);//'fieldValue'
