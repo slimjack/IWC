@@ -156,9 +156,9 @@
     };
 
     function releaseAllLocks() {
-        var activeLocks = [].concat(activeLocks);
-        for (var i = 0; i < activeLocks.length; i++) {
-            activeLocks[i].release();
+        var locks = [].concat(activeLocks);
+        for (var i = 0; i < locks.length; i++) {
+            locks[i].release();
         }
     };
 
